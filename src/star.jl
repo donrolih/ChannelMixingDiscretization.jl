@@ -32,7 +32,7 @@ function ε(x::Real,
     end
 end
 
-function ε(xs::AbstractArray{Real},
+function ε(xs::AbstractArray,
     ticker::Ticker,
     discparams::DiscretizationParams,
     mesh::Mesh)
@@ -127,8 +127,8 @@ function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
     zs = params.z
     J = params.J
     
-    Ts = Dict()
-    Es = Dict()
+    Ts = Dict{Integer, Array{Complex{S<:Real}, 4}}()
+    Es = Dict{Integer, Array{Complex{S<:Real}, 4}}()
     if Nbands == 1
         for sign in [-1, 1]
             E = zeros(ComplexF64, J, length(zs))
