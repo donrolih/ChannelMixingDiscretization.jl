@@ -1,6 +1,8 @@
-abstract type PhysicalModel end
+########################
+# PREDEFINED MODELS
+########################
 
-struct sWaveSC{T<:Real} <: PhysicalModel
+struct sWaveSC{T<:Real}
     # physical params
     # BCS gap
     Δ::T
@@ -16,7 +18,7 @@ end
 
 sWaveSC() = sWaveSC(0.1, 0., 0., 0., 0.5/pi)
 
-struct Flat{T<:Real} <: PhysicalModel
+struct Flat{T<:Real}
     Δ::T
     Γ::T
 end

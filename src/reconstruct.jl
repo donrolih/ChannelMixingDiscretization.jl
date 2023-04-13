@@ -60,12 +60,12 @@ end
 
 # this reconstruction method is described in Appendix 2 of PRB 93, 035102 (2016)
 """
-    Given a vector chain Hamiltonians reconstruct the original hybridization function.
+    Given a vector of chain Hamiltonians reconstruct the original hybridization function.
 """
 function reconstructhybri(chains::Vector{WilsonChain}, ωs; smear=0.1)
     Nz = length(chains)
     # Getting Nbands is a bit clumsy, maybe I should write a function for this?
-    Nbands = size(chains[1].E)[2]
+    Nbands = size(chains[1].E, 2)
     hybri = zeros(ComplexF64, length(ωs), Nbands, Nbands)
     start = time()
     println("Starting reconstruction of the spectrum with Nz = $(Nz)!")

@@ -1,3 +1,7 @@
+########################
+#GENERATING DATA
+########################
+
 """
     Generate a vector of Nz twisting parameters, linearly distributed on (0, 1).
 """
@@ -5,6 +9,23 @@ function twistingparameters(Nz::Integer)
     return collect(range(0.5/Nz, 1 - 0.5/Nz, Nz))
 end
 
+"""
+    Generates ω support of ρ for a given mesh type and model. 
+"""
+function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-30)
+    # mesh parameters
+    ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
+    Δ = model.Δ
+
+    negfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
+    posfreqs = exp.(range(log(ω0),log(D - Δ), Int(Nω/2) - 1)) .+ Δ
+
+    return vcat(-reverse(negfreqs), [-Δ - offset, Δ + offset], posfreqs)
+end
+
+########################
+# DATA ANALYSIS
+########################
 """
     Coefficients of the expansion of the D ∈ su(2) in the basis of Pauli matrices.
 """
@@ -34,18 +55,4 @@ function getpaulicoeffs(hybri)
         allcoeffs[:, i] = real.(coeffs)
     end
     return allcoeffs
-end
-
-"""
-    Generates ω support of ρ for a given mesh type and model. 
-"""
-function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-30)
-    # mesh parameters
-    ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
-    Δ = model.Δ
-
-    negfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
-    posfreqs = exp.(range(log(ω0),log(D - Δ), Int(Nω/2) - 1)) .+ Δ
-
-    return vcat(-reverse(negfreqs), [-Δ - offset, Δ + offset], posfreqs)
 end

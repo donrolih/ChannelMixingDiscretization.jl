@@ -17,6 +17,7 @@ function maptochains(starH::StarModel; m=nothing)
         ti = permutedims(reshape(permutedims(ti, [3, 2, 1]), (Nbands, :)), Nbands:-1:1)
         F = qr(ti)
         # Matrix(F.Q) returns the 'thin' Q-matrix with ortonormal columns
+        # this is necessary because Julia is a column-major language
         q = permutedims(reshape(permutedims(Matrix(F.Q), [2, 1]), (Nbands, :)), Nbands:-1:1)
         println("Mapping to a Wilson chain for twisting parameter z = $(z) ...")
         H = BlockDiagonal([Elist[k, i, :, :] for k in 1:J])

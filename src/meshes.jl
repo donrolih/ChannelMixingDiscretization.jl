@@ -16,10 +16,16 @@ DiscretizationParams() = DiscretizationParams(2.,
                                               35,
                                               500000,
                                               1e-5
-                                              )
+)
 
+"""
+    Mesh super type.
+"""
 abstract type Mesh end
 
+"""
+    Logarithmic mesh.
+"""
 struct LogMesh <: Mesh
     ω0::Real
     Nω::Integer

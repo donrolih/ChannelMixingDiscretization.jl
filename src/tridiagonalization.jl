@@ -20,7 +20,7 @@ end
 function tridiagonalize(A, q, m)
     # A has shape 2JI x 2JI, q is a 'thin matrix' of shape 2JI x I
     # I is (this is also Nbands)
-    n = size(q)[2]
+    n = size(q, 2)
     # set the number of iterations as 2J
     m = m === nothing ? Int(size(A)[1]/n) : m
     Al = zeros(ComplexF64, m, n, n)
