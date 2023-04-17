@@ -1,7 +1,7 @@
 """
     Given a star Hamiltonian reconstruct the original hybridization function.
 """
-function reconstructhybri(star::StarModel, ωs; smear=0.1)
+function reconstructhybri(star::StarHamiltonian, ωs; smear=0.1)
     Es = star.E
     Ts = star.T
     Elist = vcat(reverse(Es[-1]; dims=1), Es[1])

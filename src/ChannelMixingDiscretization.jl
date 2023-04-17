@@ -10,13 +10,13 @@ using Interpolations
 # from meshes.jl
 export LogMesh, DiscretizationParams
 # from models.jl
-export sWaveSC, Flat
+export sWaveSC, Flat, hybri
 # from chain.jl
 export WilsonChain, maptochains
 # from star.jl
-export StarModel, maptostar
+export StarHamiltonian, discmodel
 # from utils.jl
-export twistingparameters, paulibasis, generateω
+export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs
 # from reconstruct.jl
 export reconstructhybri
 export interpolate, int
@@ -36,8 +36,8 @@ end
 include("meshes.jl")
 include("models.jl")
 include("star.jl")
+include("tridiagonalization.jl")
 include("chain.jl")
-include("discretization.jl")
 include("utils.jl")
 include("reconstruct.jl")
 

@@ -54,5 +54,16 @@ function getpaulicoeffs(hybri)
         coeffs = paulibasis(D)
         allcoeffs[:, i] = real.(coeffs)
     end
-    return allcoeffs
+    return real.(allcoeffs)
+end
+
+"""
+    Get a tensor of values for a hybridization function ρ and an array of frequencies ωs. The shape of the tensor is (Nω, n, n), where Nω is the length of ωs and n is the number of bands. 
+"""
+function generateρs(ρ, ωs)
+    ρs = [ρ(ω) for ω in ωs]
+    n = size(first(ρs), 1)
+    ρs = reduce(hcat, ρs)
+    ρs = reshape(ρs, n, n, :)
+    return permutedims(ρs, (3, 1, 2))
 end

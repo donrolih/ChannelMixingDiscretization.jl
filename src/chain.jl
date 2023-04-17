@@ -1,10 +1,18 @@
-struct WilsonChain{S<:Real}
-    E::Array{Complex{S}, 3}
-    T::Array{Complex{S}, 3}
+struct WilsonChain
+    E::Array{Complex{Float64}, 3}
+    T::Array{Complex{Float64}, 3}
     z::Float64
 end
 
-function maptochains(starH::StarModel; m=nothing)
+function getTlist(star::StarHamiltonian)
+    return vcat(reverse(star.T[-1]; dims=1), star.T[1])
+end
+
+function getElist(star::StarHamiltonian)
+    return vcat(reverse(star.E[-1]; dims=1), star.E[1])
+end
+
+function maptochains(starH::StarHamiltonian; m=nothing)
     Elist = getElist(starH)
     Tlist = getTlist(starH)
     zs = starH.zs

@@ -1,17 +1,14 @@
-"""
-    Construct a discretized star model from arrays E, T and zs. E contains on-site energies, T contains hopping terms and zs the twinsting paramerers in the interval (0, 1).
-"""
-struct StarModel{S<:Real}
-    E::Dict{Integer, Array{Complex{S}, 4}}
-    T::Dict{Integer, Array{Complex{S}, 4}}
-    zs::Vector{Float64}
+struct StarHamiltonian 
+    T::Dict
+    E::Dict
+    zs::Vector
 end
 
-struct Ticker 
-    R::AbstractArray
+struct Ticker
+    R::AbstractArray 
     iR::Interpolations.Extrapolation
-    function Ticker(ωs::Vector{S}, weight::Vector{S}) where {S <: Real}
-        R = cumul_integrate(ωs, weight)
+    function Ticker(ωs::AbstractArray, weights::AbstractArray)
+        R = cumul_integrate(ωs, weights)
         iR = linear_interpolation(R, ωs, extrapolation_bc=Line())
         return new(R, iR)
     end
@@ -33,10 +30,10 @@ function ε(x::Real,
 end
 
 function ε(xs::AbstractArray,
-    ticker::Ticker,
-    discparams::DiscretizationParams,
-    mesh::Mesh)
-return [ε(x, ticker, discparams, mesh) for x in xs]
+           ticker::Ticker,
+           discparams::DiscretizationParams,
+           mesh::Mesh)
+    return [ε(x, ticker, discparams, mesh) for x in xs]
 end
 
 function getweights(ρs::Vector)
@@ -120,15 +117,12 @@ function getTEfunctions(ωs::Vector,
     return Tfunctions, Efunctions
 end
 
-"""
-    Constructs E and T arrays (on-site energies and hoppings) from E and T functions.
-"""
 function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
     zs = params.z
     J = params.J
     
-    Ts = Dict{Integer, Array{Complex{S<:Real}, 4}}()
-    Es = Dict{Integer, Array{Complex{S<:Real}, 4}}()
+    Ts = Dict()
+    Es = Dict()
     if Nbands == 1
         for sign in [-1, 1]
             E = zeros(ComplexF64, J, length(zs))
@@ -189,10 +183,7 @@ function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
     return Ts, Es
 end
 
-"""
-    Given a hybridization function (scalar or matrix) constructs the appropriate star model.
-"""
-function maptostar(ρ::Function, mesh::Mesh, model::PhysicalModel, params::DiscretizationParams)
+function discmodel(ρ::Function, mesh::Mesh, model::PhysicalModel, params::DiscretizationParams)
     ωs = generateω(mesh, model)
     ρs = [ρ(ω) for ω in ωs]
     Tfunctions = Dict()
@@ -208,7 +199,7 @@ function maptostar(ρ::Function, mesh::Mesh, model::PhysicalModel, params::Discr
         println("Generating discrete model ...")
         Ts, Es = getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
         println("Done!")
-        return StarModel(Ts, Es, params.z)
+        return StarHamiltonian(Ts, Es, params.z)
     elseif isa(first(ρs), Matrix)
         # multiband
         Nbands, _ = size(first(ρs))
@@ -241,7 +232,7 @@ function maptostar(ρ::Function, mesh::Mesh, model::PhysicalModel, params::Discr
         println("Generating discrete model ...")
         Ts, Es = getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
         println("Done!")
-        return StarModel(Ts, Es, params.z)
+        return StarHamiltonian(Ts, Es, params.z)
     else
         error("something is wrong with the dimensions of the hybridisation function!")
     end
