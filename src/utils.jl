@@ -67,3 +67,18 @@ function generateρs(ρ, ωs)
     ρs = reshape(ρs, n, n, :)
     return permutedims(ρs, (3, 1, 2))
 end
+
+########################
+# SAVING FILES
+########################
+
+"""
+    Saves Wilson chains for each z in a different file name_i_Nz.dat (one can also save it as .jld2 file which is more convenient for future Julia use but not compatible across languages).
+"""
+function savechains(chain; format="ascii")
+    
+end
+
+function loadchains(path)
+    
+end

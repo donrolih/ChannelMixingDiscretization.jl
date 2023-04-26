@@ -1,7 +1,7 @@
 struct WilsonChain
     E::Array{Complex{Float64}, 3}
     T::Array{Complex{Float64}, 3}
-    z::Float64
+    z::Tuple{Int64, Int64}
 end
 
 function getTlist(star::StarHamiltonian)
@@ -38,7 +38,7 @@ function maptochains(starH::StarHamiltonian; m=nothing)
         T[1, :, :] = F.R
         # sub-diagonal
         T = vcat(T, diags[-1])
-        chains[i] = WilsonChain(E, T, z)
+        chains[i] = WilsonChain(E, T, (i, Nz))
     end
 
     return chains
