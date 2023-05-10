@@ -73,10 +73,40 @@ end
 ########################
 
 """
-    Saves Wilson chains for each z in a different file name_i_Nz.dat (one can also save it as .jld2 file which is more convenient for future Julia use but not compatible across languages).
+    Saves Wilson chains for each z in two different files: energies_i_Nz.txt and hoppings_i_Nz.txt. The default directory path is E_T_matrices/ (one can change this using the optional parameter foldername).
 """
-function savechains(chain; format="ascii")
-    
+function savechains(chains::Vector{WilsonChain};
+                    foldername="E_T_matrices")
+    mkpath(foldername)
+
+    for chain in chains
+        z, Nz = chain.z
+        # on-site energies and hoppings
+        E = chain.E
+        T = chain.T
+        # length of Wilson chain
+        J = size(E, 1)
+
+        suffix = "_$(z)_$(Nz).txt"
+
+        # on-site energies
+        energies_path = joinpath(foldername, "energies"*suffix)
+        open(energies_path, "w") do f
+            for i in 1:J
+                writedlm(f, E[i, :, :])
+                if i != J write(f, "\n") end
+            end
+        end
+
+        # chain hoppings
+        hoppings_path = joinpath(foldername, "hoppings"*suffix)
+        open(hoppings_path, "w") do f
+            for i in 1:J
+                writedlm(f, T[i, :, :])
+                if i != J write(f, "\n") end
+            end
+        end
+    end
 end
 
 function loadchains(path)
