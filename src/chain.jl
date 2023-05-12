@@ -17,29 +17,46 @@ function maptochains(starH::StarHamiltonian; m=nothing)
     Tlist = getTlist(starH)
     zs = starH.zs
     # I probably have to again divide separate cases for Nbands = 1 and other
-    J, Nz, Nbands, _ = size(Elist)
-    # store the data in a vector of dicts
-    chains = Vector{WilsonChain}(undef, Nz)
-    for (i, z) in enumerate(zs)
-        ti = Tlist[:, i, :, :]
-        ti = permutedims(reshape(permutedims(ti, [3, 2, 1]), (Nbands, :)), Nbands:-1:1)
-        F = qr(ti)
-        # Matrix(F.Q) returns the 'thin' Q-matrix with ortonormal columns
-        # this is necessary because Julia is a column-major language
-        q = permutedims(reshape(permutedims(Matrix(F.Q), [2, 1]), (Nbands, :)), Nbands:-1:1)
-        println("Mapping to a Wilson chain for twisting parameter z = $(z) ...")
-        H = BlockDiagonal([Elist[k, i, :, :] for k in 1:J])
-        # println(typeof(H))
-        diags = tridiagonalize(H, q, m)
-        # construct E and T matrices along the chain
-        # the diagonal
-        E = diags[0]
-        T = zeros(ComplexF64, 1, Nbands, Nbands)
-        T[1, :, :] = F.R
-        # sub-diagonal
-        T = vcat(T, diags[-1])
-        chains[i] = WilsonChain(E, T, (i, Nz))
+    # if Elist and Tlist are matrices (not tensors) then we have one band
+    if isa(Elist, Matrix)
+        J, Nz = size(Elist)
+        Nbands = 1
+        chains = Vector{WilsonChain}(undef, Nz)
+        for (i, z) in enumerate(zs)
+            ti = Tlist[:, i]
+            # make a matrix
+            ti = ti[:, :]
+            F = qr(ti)
+            H = diagm(Elist[:, i])
+            diags = tridiagonalize(H, q, m)
+            # construct E and T matrices along the chain
+            
+        end
+    else
+        # we have a multiband case
+        J, Nz, Nbands, _ = size(Elist)
+        # store the data in a vector of dicts
+        chains = Vector{WilsonChain}(undef, Nz)
+        for (i, z) in enumerate(zs)
+            ti = Tlist[:, i, :, :]
+            ti = permutedims(reshape(permutedims(ti, [3, 2, 1]), (Nbands, :)), Nbands:-1:1)
+            F = qr(ti)
+            # Matrix(F.Q) returns the 'thin' Q-matrix with ortonormal columns
+            # permuting this is necessary because Julia is a column-major language
+            q = permutedims(reshape(permutedims(Matrix(F.Q), [2, 1]), (Nbands, :)), Nbands:-1:1)
+            println("Mapping to a Wilson chain for twisting parameter z = $(z) ...")
+            H = BlockDiagonal([Elist[k, i, :, :] for k in 1:J])
+            # println(typeof(H))
+            diags = tridiagonalize(H, q, m)
+            # construct E and T matrices along the chain
+            # the diagonal
+            E = diags[0]
+            T = zeros(ComplexF64, 1, Nbands, Nbands)
+            T[1, :, :] = F.R
+            # sub-diagonal
+            T = vcat(T, diags[-1])
+            chains[i] = WilsonChain(E, T, (i, Nz))
+        end
     end
-
     return chains
 end

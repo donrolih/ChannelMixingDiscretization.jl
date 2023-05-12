@@ -52,3 +52,7 @@ function hybri(model::sWaveSC, mesh::Mesh; η=1e-10)
         return (im/(2pi))*(Σ - Σ')
     end
 end
+
+function hybri(model::Flat, mesh::Mesh)
+    hybri(ω::Float64) = model.Γ
+end
