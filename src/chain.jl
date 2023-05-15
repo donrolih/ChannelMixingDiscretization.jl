@@ -28,9 +28,16 @@ function maptochains(starH::StarHamiltonian; m=nothing)
             ti = ti[:, :]
             F = qr(ti)
             H = diagm(Elist[:, i])
+            q = Matrix(F.Q)
+            println("Mapping to a Wilson chain for twisting parameter z = $(z) ...")
             diags = tridiagonalize(H, q, m)
             # construct E and T matrices along the chain
-            
+            E = diags[0]
+            T = zeros(ComplexF64, 1, Nbands, Nbands)
+            T[1, :, :] = F.R
+            # sub-diagonal
+            T = vcat(T, diags[-1])
+            chains[i] = WilsonChain(E, T, (i, Nz))
         end
     else
         # we have a multiband case

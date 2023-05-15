@@ -13,7 +13,7 @@ function gramschmidt(u, Q; maxiter=3, α=0.5)
     if r1 <= α*r
         println("WARNING! Loss of orthogonality at Gram-Schmidt!")
     end
-    if u_start == u error("nothing changed during Gram-Schmidt!") end
+
     return u
 end
 
@@ -29,7 +29,7 @@ function tridiagonalize(A, q, m)
     Q = hcat(zeros(size(q)), q)
     for j in 1:m
         Qj = Q[:, end-(n-1):end]
-        Uj = A*Qj - Q[:, end - (n + 1):end-n]*(B[j, :, :]')
+        Uj = A*Qj - Q[:, (end - 2n + 1):(end - n)]*(B[j, :, :]')
         Aj = Qj'*Uj
         Rj = Uj - Qj*Aj
         F = qr(Rj)
