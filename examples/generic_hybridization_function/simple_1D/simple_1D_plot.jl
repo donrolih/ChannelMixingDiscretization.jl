@@ -1,7 +1,7 @@
 using ChannelMixingDiscretization
 ##
 # offset is important (ω0!!! if it is too small, you get divergences at zero!)
-mesh = LogMesh()
+mesh = LogMesh(1e-4, 5000, 1.)
 model = Flat()
 
 Nz = 32
