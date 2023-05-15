@@ -89,6 +89,3 @@ Nz = length(params.z)
 title = L"Mapping to a Wilson chain: $N_z = %$(Nz)$, $\Lambda = %$(Λ)$"
 fig.suptitle(y=1.01, title)
 display(fig)
-
-##
-using JLD2
