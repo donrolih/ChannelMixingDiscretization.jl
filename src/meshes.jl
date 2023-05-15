@@ -32,4 +32,4 @@ struct LogMesh <: Mesh
     D::Real
 end
 
-LogMesh() = LogMesh(1e-4, 5000, 1.)
+LogMesh() = LogMesh(1e-12, 5000, 1.)
