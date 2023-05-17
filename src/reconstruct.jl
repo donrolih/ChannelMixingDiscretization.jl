@@ -82,8 +82,6 @@ function reconstructhybri(chains::Vector{WilsonChain}, ωs; smear=0.1)
             for k in size(E, 1):-1:1
                 e = E[k, :, :]
                 t = T[k, :, :]
-                # invG = (ω + im*(smear/Nz)*max(1e-4, abs(ω)))*I - e - Σ
-                # invG = (ω + im*(smear/Nz)*maximum(abs, t))*I - e - Σ
                 invG = (ω + im*((abs(ω) + 1e-10)*(smear/Nz)))*I - e - Σ
                 G = inv(invG)
                 Σ = t'*G*t

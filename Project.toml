@@ -13,6 +13,10 @@ NumericalIntegration = "e7bfaba1-d571-5449-8927-abc22e82249b"
 
 [compat]
 julia = "1"
+BlockDiagonals = "0.1.41"
+Interpolations = "0.14.7"
+JLD2 = "0.4.31"
+NumericalIntegration = "0.2.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
