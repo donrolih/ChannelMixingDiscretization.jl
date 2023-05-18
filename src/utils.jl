@@ -130,8 +130,6 @@ function loadchains()
                 l = 1
                 for (j, line) in enumerate(lines)
                     if line != ""
-                        println(j)
-                        println(line)
                         E[k, l, :] = parse.(ComplexF64, split(line, "\t"))
                         l += 1
                     else
