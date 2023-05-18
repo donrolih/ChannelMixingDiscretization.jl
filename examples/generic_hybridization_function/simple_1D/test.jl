@@ -1,0 +1,4 @@
+##
+using ChannelMixingDiscretization
+##
+chains = loadchains();

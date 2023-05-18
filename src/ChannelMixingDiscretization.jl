@@ -17,7 +17,7 @@ export WilsonChain, maptochains
 # from star.jl
 export StarHamiltonian, discmodel
 # from utils.jl
-export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains
+export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains, loadchains
 # from reconstruct.jl
 export reconstructhybri
 

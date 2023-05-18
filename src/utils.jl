@@ -109,6 +109,60 @@ function savechains(chains::Vector{WilsonChain};
     end
 end
 
-function loadchains(path)
-    
+function loadchains()
+    if isdir("E_T_matrices")
+        files = readdir("E_T_matrices")
+        Nz = Int(length(files)/2)
+        chains = Vector{WilsonChain}(undef, Nz)
+        for i in 1:Nz
+            fn_e = "E_T_matrices/energies_$(i)_$(Nz).txt"
+            fn_t = "E_T_matrices/hoppings_$(i)_$(Nz).txt"
+
+            E = zeros(ComplexF64, 1, 1, 1)
+            T = zeros(ComplexF64, 1, 1, 1)
+
+            open(fn_e) do f
+                lines = readlines(f)
+                Nbands = length(split(lines[1], "\t"))
+                J = Int((length(lines) + 1)/(Nbands + 1))
+                E = zeros(ComplexF64, J, Nbands, Nbands)
+                k = 1
+                l = 1
+                for (j, line) in enumerate(lines)
+                    if line != ""
+                        println(j)
+                        println(line)
+                        E[k, l, :] = parse.(ComplexF64, split(line, "\t"))
+                        l += 1
+                    else
+                        k += 1
+                        l = 1
+                    end
+                end
+            end
+
+            open(fn_t) do f
+                lines = readlines(f)
+                Nbands = length(split(lines[1], "\t"))
+                J = Int((length(lines) + 1)/(Nbands + 1))
+                T = zeros(ComplexF64, J, Nbands, Nbands)
+                k = 1
+                l = 1
+                for (j, line) in enumerate(lines)
+                    if line != ""
+                        T[k, l, :] = parse.(ComplexF64, split(line, "\t"))
+                        l += 1
+                    else
+                        k += 1
+                        l = 1
+                    end
+                end
+            end
+            chains[i] = WilsonChain(E, T, (i, Nz))
+        end
+        return chains
+    else
+        error("Directory E_T_matrices does not exist in the working directory!")
+    end
+
 end
