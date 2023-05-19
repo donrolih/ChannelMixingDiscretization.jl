@@ -4,6 +4,7 @@ module ChannelMixingDiscretization
 # Dependencies
 using LinearAlgebra
 using BlockDiagonals
+using BlockBandedMatrices
 using NumericalIntegration
 using Interpolations
 using DelimitedFiles, JLD2

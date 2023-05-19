@@ -4,6 +4,14 @@ struct WilsonChain
     z::Tuple{Int64, Int64}
 end
 
+function numberchannels(chain::WilsonChain)
+    return size(chain.E, 2)
+end
+
+function numbersites(chain::WilsonChain)
+    return size(chain.E, 1)
+end
+
 function getTlist(star::StarHamiltonian)
     return vcat(reverse(star.T[-1]; dims=1), star.T[1])
 end

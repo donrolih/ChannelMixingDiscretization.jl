@@ -95,3 +95,29 @@ function reconstructhybri(chains::Vector{WilsonChain}, ωs; smear=0.1)
     # average over all twisting parameters
     return hybri/Nz
 end
+
+function spectralfunction(chains::Vector{WilsonChain})
+    Nz = length(chains)
+    for (i, chain) in enumerate(chains)
+        E = chain.E
+        T = chain.T
+        N = numberchannels(chain)
+        J = numbersites(chain)
+        vecE = Array{Array{ComplexF64, N}, 1}(undef, J)
+        vecT = Array{Array{ComplexF64, N}, 1}(undef, J)
+        vecT_adj = Array{Array{ComplexF64, N}, 1}(undef, J)
+        for j in axes(T, 1)
+            t = T[j, :, :]
+            vecT[j] = t
+            vecT_adj[j] = t'
+            vecE[j] = E[j, :, :]
+        end
+        H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT[2:end]))
+        vals, vecs = eigen(H)
+        weights = zeros(size(vecs, 2))
+        for k in eachcol(vecs)
+            weights[k] = abs(k[1])^2
+        end
+        
+    end
+end
