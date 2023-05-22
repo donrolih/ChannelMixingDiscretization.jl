@@ -67,3 +67,15 @@ title = L"Mapping to a Wilson chain: $N_z = %$(Nz)$, $\Lambda = %$(Λ)$"
 fig.suptitle(y=1.01, title)
 display(fig)
 # fig.savefig("wilson_chain_mapping.pdf")
+##
+# spectral function with diagonalisation
+data = spectralfunction(chains)
+energies = data[:, 1]
+spectral = data[:, 2];
+
+##
+fig, ax = plt.subplots()
+
+ax.plot(energies, spectral, ".")
+
+display(fig)

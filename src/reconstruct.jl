@@ -96,28 +96,55 @@ function reconstructhybri(chains::Vector{WilsonChain}, ωs; smear=0.1)
     return hybri/Nz
 end
 
-function spectralfunction(chains::Vector{WilsonChain})
+function spectralfunction(chains::Vector{WilsonChain}; zaveraging=false, save=true)
     Nz = length(chains)
+    freqs = Array{Vector{ComplexF64}}(undef, Nz)
+    weights = Array{Vector{ComplexF64}}(undef, Nz)
+    
     for (i, chain) in enumerate(chains)
-        E = chain.E
-        T = chain.T
-        N = numberchannels(chain)
-        J = numbersites(chain)
-        vecE = Array{Array{ComplexF64, N}, 1}(undef, J)
-        vecT = Array{Array{ComplexF64, N}, 1}(undef, J)
-        vecT_adj = Array{Array{ComplexF64, N}, 1}(undef, J)
-        for j in axes(T, 1)
-            t = T[j, :, :]
-            vecT[j] = t
-            vecT_adj[j] = t'
-            vecE[j] = E[j, :, :]
+        println("Diagonalising for (i, Nz) = ($(i), $(Nz))")
+        freqs[i], weights[i] = spectralfunction(chain)
+        if save == true
+            mkpath("$(i)")
+            open("$(i)/spec_f0.dat", "w") do f
+                writedlm(f, hcat(real.(freqs[i]), real.(weights[i])))
+            end
         end
-        H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT[2:end]))
-        vals, vecs = eigen(H)
-        weights = zeros(size(vecs, 2))
-        for k in eachcol(vecs)
-            weights[k] = abs(k[1])^2
-        end
-        
     end
+
+    if zaveraging == true
+        freqs = (1/Nz) .* reduce(+, freqs)
+        weights = (1/Nz) .* reduce(+, weights)
+        if save == true
+            open("spec_f0_zaveraged.dat", "w") do f
+                writedlm(f, hcat(real.(freqs), real.(weights)))
+            end
+        end
+    end
+    
+    return freqs, weights 
+end
+
+function spectralfunction(chain::WilsonChain)
+    E = chain.E
+    T = chain.T
+    N = numberchannels(chain)
+    J = numbersites(chain)
+    vecE = Array{Array{ComplexF64, 2}, 1}(undef, J)
+    vecT = Array{Array{ComplexF64, 2}, 1}(undef, J)
+    vecT_adj = Array{Array{ComplexF64, 2}, 1}(undef, J)
+    for j in axes(T, 1)
+        t = T[j, :, :]
+        vecT[j] = t
+        vecT_adj[j] = t'
+        vecE[j] = E[j, :, :]
+    end
+    # H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT[2:end]))
+    H = Matrix(BlockTridiagonal(vecT, pushfirst!(vecE, zeros(N, N)), vecT))
+    vals, vecs = eigen(H)
+    weights = zeros(size(vecs, 2))
+    for (i, k) in enumerate(eachcol(vecs))
+        weights[i] = abs(k[1])^2
+    end
+    return vals, weights
 end

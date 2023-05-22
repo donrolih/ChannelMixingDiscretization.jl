@@ -20,7 +20,7 @@ export StarHamiltonian, discmodel
 # from utils.jl
 export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains, loadchains
 # from reconstruct.jl
-export reconstructhybri
+export reconstructhybri, spectralfunction
 
 include("meshes.jl")
 include("models.jl")
