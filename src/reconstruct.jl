@@ -96,14 +96,14 @@ function reconstructhybri(chains::Vector{WilsonChain}, ωs; smear=0.1)
     return hybri/Nz
 end
 
-function spectralfunction(chains::Vector{WilsonChain}; zaveraging=false, save=true)
+function spectralfunction(chains::Vector{WilsonChain}; zaveraging=false, save=true, takezeroth=true)
     Nz = length(chains)
     freqs = Array{Vector{ComplexF64}}(undef, Nz)
     weights = Array{Vector{ComplexF64}}(undef, Nz)
     
     for (i, chain) in enumerate(chains)
         println("Diagonalising for (i, Nz) = ($(i), $(Nz))")
-        freqs[i], weights[i] = spectralfunction(chain)
+        freqs[i], weights[i] = spectralfunction(chain; takezeroth=takezeroth)
         if save == true
             mkpath("$(i)")
             open("$(i)/spec_f0.dat", "w") do f
@@ -125,7 +125,7 @@ function spectralfunction(chains::Vector{WilsonChain}; zaveraging=false, save=tr
     return freqs, weights 
 end
 
-function spectralfunction(chain::WilsonChain)
+function spectralfunction(chain::WilsonChain; takezeroth=true)
     E = chain.E
     T = chain.T
     N = numberchannels(chain)
@@ -139,12 +139,22 @@ function spectralfunction(chain::WilsonChain)
         vecT_adj[j] = t'
         vecE[j] = E[j, :, :]
     end
-    # H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT[2:end]))
-    H = Matrix(BlockTridiagonal(vecT, pushfirst!(vecE, zeros(N, N)), vecT))
-    vals, vecs = eigen(H)
-    weights = zeros(size(vecs, 2))
-    for (i, k) in enumerate(eachcol(vecs))
-        weights[i] = abs(k[1])^2
+
+    if takezeroth == true
+        H = Matrix(BlockTridiagonal(vecT, pushfirst!(vecE, zeros(N, N)), vecT))
+        vals, vecs = eigen(H)
+        weights = zeros(size(vecs, 2))
+        for (i, k) in enumerate(eachcol(vecs))
+            weights[i] = abs(k[1])^2
+        end
+        return vals, weights
+    else
+        H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT[2:end]))
+        vals, vecs = eigen(H)
+        weights = zeros(size(vecs, 2))
+        for (i, k) in enumerate(eachcol(vecs))
+            weights[i] = abs(k[1])^2
+        end
+        return vals, weights
     end
-    return vals, weights
 end
