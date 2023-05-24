@@ -12,7 +12,7 @@ end
 """
     Generates ω support of ρ for a given mesh type and model. 
 """
-function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-30)
+function generateω(mesh::LogMesh, model::PhysicalModel; offset=big(1e-15))
     # mesh parameters
     ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
     Δ = model.Δ

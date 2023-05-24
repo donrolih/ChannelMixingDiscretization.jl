@@ -3,6 +3,7 @@ module ChannelMixingDiscretization
 # Write your package code here.
 # Dependencies
 using LinearAlgebra
+using GenericLinearAlgebra
 using BlockDiagonals
 using BlockBandedMatrices
 using NumericalIntegration

@@ -33,7 +33,7 @@ Flat() = Flat(0., 0.5/pi)
 ################################################
 
 function hybri(model::sWaveSC, mesh::Mesh; η=1e-10)
-    function hybri(ω::Float64)
+    function hybri(ω)
         σ0 = [1. 0.; 0. 1.]
         σ1 = [0. 1.; 1. 0.]
         σ3 = [1. 0.; 0. -1.]
@@ -54,5 +54,5 @@ function hybri(model::sWaveSC, mesh::Mesh; η=1e-10)
 end
 
 function hybri(model::Flat, mesh::Mesh)
-    hybri(ω::Float64) = model.Γ
+    hybri(ω) = model.Γ
 end

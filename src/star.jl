@@ -43,6 +43,7 @@ function getweights(ρs::Vector)
     elseif isa(el, Matrix)
         # compute the squared Hilbert-Schmidt norm (it probably should not be squared, but I am following their implementation)
         # but choices seem to give the same result
+        # these are the weights for the  adaptive scale
         norms = [norm(ρ)^2 for ρ in ρs]
         return norms
     else
@@ -93,7 +94,7 @@ function getTEfunctions(ωs::Vector,
             arg = Rfunc(ε(x, ticker, params, mesh)) - Rfunc(ε(x + 1, ticker, params, mesh))
             if arg >= 0.
                 return sqrt(arg)
-            elseif abs(arg) < 1e-8
+            elseif abs(arg) < 1e-12
                 return 0.
             else
                 error("negative argument when calculating the hopping function!")
@@ -103,7 +104,7 @@ function getTEfunctions(ωs::Vector,
 
         Tfunctions[sign] = Tfunc
         # it has to be J + 2 because of the extented bound of integration below
-        xs = range(1., params.J + 2,params.Nx)
+        xs = range(big(1.), big(params.J + 2), params.Nx)
         # inverse of the R function
         iRfunc = linear_interpolation(integratedρ, sign.*ωbranch, extrapolation_bc=Line())
 
@@ -125,8 +126,8 @@ function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
     Es = Dict()
     if Nbands == 1
         for sign in [-1, 1]
-            E = zeros(ComplexF64, J, length(zs))
-            T = zeros(ComplexF64, J, length(zs))
+            E = zeros(Complex{BigFloat}, J, length(zs))
+            T = zeros(Complex{BigFloat}, J, length(zs))
             for j in 1:J
                 for (k, z) in enumerate(zs)
                     x = j + z
@@ -142,20 +143,21 @@ function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
     else
         for sign in [-1, 1]
             # shape of E and T is: (number of J sites, Nz, Nbands, Nbands)
-            E = zeros(ComplexF64, J, length(zs), Nbands, Nbands)
-            T = zeros(ComplexF64, J, length(zs), Nbands, Nbands)
+            E = zeros(Complex{BigFloat}, J, length(zs), Nbands, Nbands)
+            T = zeros(Complex{BigFloat}, J, length(zs), Nbands, Nbands)
             for j in 1:J
                 for (k, z) in enumerate(zs)
-                    x = j + z
+                    x = big(j + z)
                     ϵ = [Efunctions[sign][i](x) for i in 1:Nbands]
                     ϵ = diagm(ϵ)
                     E[j, k, :, :] = ϵ
                     ϵiold = Inf
-                    Ux = zeros(Nbands)
+                    Ux = zeros(Complex{BigFloat}, Nbands)
                     for i in 1:Nbands
                         ϵi = ϵ[i, i]
                         if abs(ϵiold - ϵi) > 1e-12
-                            Ui = eigvecs(ρ(ϵi))[:, i]
+                            M = Hermitian(ρ(ϵi))
+                            Ui = eigvecs(M)[:, i]
                             ϵiold = ϵi
                         else
                             println("Found a degeneracy!")
@@ -167,7 +169,7 @@ function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
                     end
                     Ux = Ux[:, 2:end]
                     tfuncs = Tfunctions[sign]
-                    Td = zeros(Nbands)
+                    Td = zeros(Complex{BigFloat}, Nbands)
                     for i in 1:Nbands
                         Tdi = tfuncs[i](x).*Ux[:, i]
                         Td = hcat(Td, Tdi)

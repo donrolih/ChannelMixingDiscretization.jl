@@ -1,4 +1,4 @@
-function gramschmidt(u, Q; maxiter=3, α=0.5)
+function gramschmidt(u, Q; maxiter=3, α=big(0.5))
     r = norm(u'*u)
     r1 = 0.
     u_start = u
@@ -23,10 +23,10 @@ function tridiagonalize(A, q, m)
     n = size(q, 2)
     # set the number of iterations as 2J
     m = m === nothing ? Int(size(A)[1]/n) : m
-    Al = zeros(ComplexF64, m, n, n)
-    B = zeros(ComplexF64, m+1, n, n)
-    Bu = zeros(ComplexF64, m, n, n)
-    Q = hcat(zeros(size(q)), q)
+    Al = zeros(Complex{BigFloat}, m, n, n)
+    B = zeros(Complex{BigFloat}, m+1, n, n)
+    Bu = zeros(Complex{BigFloat}, m, n, n)
+    Q = hcat(zeros(BigFloat, size(q)), q)
     for j in 1:m
         Qj = Q[:, end-(n-1):end]
         Uj = A*Qj - Q[:, (end - 2n + 1):(end - n)]*(B[j, :, :]')
