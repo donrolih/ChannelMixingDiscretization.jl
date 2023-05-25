@@ -49,7 +49,7 @@ function maptochains(starH::StarHamiltonian; m=nothing)
             chains[i] = WilsonChain(E, T, (i, Nz))
             stop = time()
             elapsed = stop - start
-            println("Mapping duration z = $(z): $(elapsed)")
+            println("Mapping duration for z = $(z): $(round(elapsed;  digits=2)) s")
         end
     else
         # we have a multiband case
@@ -78,7 +78,7 @@ function maptochains(starH::StarHamiltonian; m=nothing)
             chains[i] = WilsonChain(E, T, (i, Nz))
             stop = time()
             elapsed = stop - start
-            println("Mapping duration z = $(z): $(elapsed)")
+            println("Mapping duration for z = $(z): $(round(elapsed;  digits=2)) s")
         end
     end
     return chains

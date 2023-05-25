@@ -41,10 +41,11 @@ function getweights(ρs::Vector)
     if isa(el, Number) || isa(el, Complex)
         return ρs
     elseif isa(el, Matrix)
+        # this is actually never executed! BUG!
         # compute the squared Hilbert-Schmidt norm (it probably should not be squared, but I am following their implementation)
-        # but choices seem to give the same result
         # these are the weights for the  adaptive scale
-        norms = [norm(ρ)^2 for ρ in ρs]
+        println("Getting weights (matrices) ...")
+        norms = [norm(ρ) for ρ in ρs]
         return norms
     else
         error("something is wrong with the dimensions of the hybridisation function!")
@@ -57,7 +58,8 @@ end
 function getTEfunctions(ωs::Vector,
                         ρs::Vector,
                         params::DiscretizationParams,
-                        mesh::Mesh)
+                        mesh::Mesh,
+                        weights::Vector)
 
     ωbranches = Dict()
     ρbranches = Dict()
@@ -70,7 +72,7 @@ function getTEfunctions(ωs::Vector,
     ρbranches[1] = ρs[positivemask]
     ρbranches[-1] = reverse(ρs[.!positivemask])
 
-    weights = getweights(ρs)
+    # weights = getweights(ρs)
     weightbranches[1] = weights[positivemask]
     weightbranches[-1] = reverse(weights[.!positivemask])
 
@@ -190,13 +192,13 @@ function discmodel(ρ::Function, mesh::Mesh, model::PhysicalModel, params::Discr
     ρs = [ρ(ω) for ω in ωs]
     Tfunctions = Dict()
     Efunctions = Dict()
-    
+    weights = getweights(ρs)
     if isa(first(ρs), Number)
         # single band case
         Nbands = 1
         println("Single band case!")
         println("Getting functions of representative energies and hoppings ...")
-        Tfunctions, Efunctions = getTEfunctions(ωs, ρs, params, mesh)
+        Tfunctions, Efunctions = getTEfunctions(ωs, ρs, params, mesh, weights)
         println("Done!")
         println("Generating discrete model ...")
         Ts, Es = getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
@@ -219,7 +221,12 @@ function discmodel(ρ::Function, mesh::Mesh, model::PhysicalModel, params::Discr
         Eplus = Vector{Function}(undef, Nbands)
         Emin = Vector{Function}(undef, Nbands)
         for i in 1:Nbands
-            tfs, efs = getTEfunctions(ωs, ρeval[:, i], params, mesh)
+            println("Calculating for band number $(i) ...")
+            start = time()
+            tfs, efs = getTEfunctions(ωs, ρeval[:, i], params, mesh, weights)
+            stop = time()
+            elapsed = stop - start
+            println("Time elapsed for band number $(i): $(round(elapsed; digits=3)) s")
             Eplus[i] = efs[1]
             Emin[i] = efs[-1]
             Tplus[i] = tfs[1]
