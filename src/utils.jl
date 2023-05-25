@@ -93,7 +93,7 @@ function savechains(chains::Vector{WilsonChain};
         energies_path = joinpath(foldername, "energies"*suffix)
         open(energies_path, "w") do f
             for i in 1:J
-                writedlm(f, E[i, :, :])
+                writedlm(f, Float64.(E[i, :, :]))
                 if i != J write(f, "\n") end
             end
         end
@@ -102,7 +102,7 @@ function savechains(chains::Vector{WilsonChain};
         hoppings_path = joinpath(foldername, "hoppings"*suffix)
         open(hoppings_path, "w") do f
             for i in 1:J
-                writedlm(f, T[i, :, :])
+                writedlm(f, Float64.(T[i, :, :]))
                 if i != J write(f, "\n") end
             end
         end
