@@ -93,7 +93,7 @@ function savechains(chains::Vector{WilsonChain};
         energies_path = joinpath(foldername, "energies"*suffix)
         open(energies_path, "w") do f
             for i in 1:J
-                e = round.(convert.(ComplexF64, E[i, :, :]), digits=15)
+                e = round.(convert.(ComplexF64, E[i, :, :]), digits=13)
                 writedlm(f, e)
                 if i != J write(f, "\n") end
             end
@@ -103,7 +103,7 @@ function savechains(chains::Vector{WilsonChain};
         hoppings_path = joinpath(foldername, "hoppings"*suffix)
         open(hoppings_path, "w") do f
             for i in 1:J
-                t = round.(convert.(ComplexF64, T[i, :, :]), digits=15)
+                t = round.(convert.(ComplexF64, T[i, :, :]), digits=13)
                 writedlm(f, t)
                 if i != J write(f, "\n") end
             end
