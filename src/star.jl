@@ -106,7 +106,7 @@ function getTEfunctions(ωs::Vector,
 
         Tfunctions[sign] = Tfunc
         # it has to be J + 2 because of the extented bound of integration below
-        xs = range(big(1.), big(params.J + 2), params.Nx)
+        xs = range(big"1", params.J + big"2", params.Nx)
         # inverse of the R function
         iRfunc = linear_interpolation(integratedρ, sign.*ωbranch, extrapolation_bc=Line())
 
@@ -149,7 +149,7 @@ function getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
             T = zeros(Complex{BigFloat}, J, length(zs), Nbands, Nbands)
             for j in 1:J
                 for (k, z) in enumerate(zs)
-                    x = big(j + z)
+                    x = j + z
                     ϵ = [Efunctions[sign][i](x) for i in 1:Nbands]
                     ϵ = diagm(ϵ)
                     E[j, k, :, :] = ϵ

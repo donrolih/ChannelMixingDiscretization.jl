@@ -1,4 +1,4 @@
-function gramschmidt(u, Q; maxiter=3, α=big(0.5))
+function gramschmidt(u, Q; maxiter=3, α=big"0.5")
     r = norm(u'*u)
     r1 = 0.
     u_start = u
