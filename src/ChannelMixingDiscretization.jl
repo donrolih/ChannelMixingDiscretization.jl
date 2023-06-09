@@ -11,7 +11,7 @@ using Interpolations
 using DelimitedFiles, JLD2
 
 # from meshes.jl
-export LogMesh, DiscretizationParams
+export LogMesh, LinMesh, DiscretizationParams
 # from models.jl
 export sWaveSC, Flat, hybri
 # from chain.jl

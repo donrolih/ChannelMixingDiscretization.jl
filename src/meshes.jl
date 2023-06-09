@@ -33,3 +33,12 @@ struct LogMesh <: Mesh
 end
 
 LogMesh() = LogMesh(1e-12, 5000, 1.)
+
+"""
+    Linear mesh.
+"""
+struct LinMesh <: Mesh
+    ω0::Real
+    Nω::Integer
+    D::Real
+end

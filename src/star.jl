@@ -14,6 +14,7 @@ struct Ticker
     end
 end
 
+# guiding function, also called ν(x)
 function ε(x::Real,
            ticker::Ticker,
            discparams::DiscretizationParams,
@@ -41,7 +42,6 @@ function getweights(ρs::Vector)
     if isa(el, Number) || isa(el, Complex)
         return ρs
     elseif isa(el, Matrix)
-        # this is actually never executed! BUG!
         # compute the squared Hilbert-Schmidt norm (it probably should not be squared, but I am following their implementation)
         # these are the weights for the  adaptive scale
         println("Getting weights (matrices) ...")
@@ -53,7 +53,7 @@ function getweights(ρs::Vector)
 end
 
 """
-    Returns the T(x) and E(x) functions with a given ρ. 
+    Returns the T(x) and E(x) functions with a given ρ.
 """
 function getTEfunctions(ωs::Vector,
                         ρs::Vector,
@@ -93,7 +93,9 @@ function getTEfunctions(ωs::Vector,
         Rfunc = linear_interpolation(sign.*ωbranch, integratedρ, extrapolation_bc=Line())
         
         function Tfunc(x)
-            arg = Rfunc(ε(x, ticker, params, mesh)) - Rfunc(ε(x + 1, ticker, params, mesh))
+            lb = ε(x + 1, ticker, params, mesh)
+            ub = ε(x, ticker, params, mesh)
+            arg = Rfunc(ub) - Rfunc(lb)
             if arg >= 0.
                 return sqrt(arg)
             elseif abs(arg) < 1e-12
@@ -105,7 +107,7 @@ function getTEfunctions(ωs::Vector,
 
 
         Tfunctions[sign] = Tfunc
-        # it has to be J + 2 because of the extented bound of integration below
+        # it has to be J + 2 because of the extended bound of integration below
         xs = range(big"1", params.J + big"2", params.Nx)
         # inverse of the R function
         iRfunc = linear_interpolation(integratedρ, sign.*ωbranch, extrapolation_bc=Line())

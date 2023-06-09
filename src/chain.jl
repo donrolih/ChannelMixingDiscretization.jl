@@ -53,6 +53,7 @@ function maptochains(starH::StarHamiltonian; m=nothing)
         end
     else
         # we have a multiband case
+        # here J is actually 2*number of j 
         J, Nz, Nbands, _ = size(Elist)
         # store the data in a vector of dicts
         chains = Vector{WilsonChain}(undef, Nz)
