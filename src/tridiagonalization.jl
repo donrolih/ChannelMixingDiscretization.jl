@@ -50,7 +50,7 @@ function tridiagonalize(A, q, m)
         Bu[j, :, :] = Matrix(F.R)'
     end
     Bl = B[2:end-1, :, :]
-    # return a dictionary of arrays; keys denote the (off)diagonal 
+    # return a dictionary of arrays; keys denote the (off)-diagonal index
     diags = Dict(-1 => Bl, 0 => Al, 1 => Bu[1:end-1, :, :])
     return diags
 end

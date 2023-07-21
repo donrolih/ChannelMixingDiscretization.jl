@@ -98,9 +98,10 @@ function getTEfunctions(ωs::Vector,
             arg = Rfunc(ub) - Rfunc(lb)
             if arg >= 0.
                 return sqrt(arg)
-            elseif abs(arg) < 1e-12
+            elseif abs(arg) < 1e-6
                 return 0.
             else
+                println(arg)
                 error("negative argument when calculating the hopping function!")
             end
         end

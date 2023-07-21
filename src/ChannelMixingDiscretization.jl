@@ -13,15 +13,15 @@ using DelimitedFiles, JLD2
 # from meshes.jl
 export LogMesh, LinMesh, DiscretizationParams
 # from models.jl
-export sWaveSC, Flat, hybri
+export sWaveSC, Flat, DoubleLeadSC, hybri
 # from chain.jl
 export WilsonChain, maptochains
 # from star.jl
 export StarHamiltonian, discmodel
 # from utils.jl
-export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains, loadchains
+export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains, loadchains, discretize
 # from reconstruct.jl
-export reconstructhybri, spectralfunction
+export reconstructhybri, spectralfunction, broadenaverage
 
 include("meshes.jl")
 include("models.jl")

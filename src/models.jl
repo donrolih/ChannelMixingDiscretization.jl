@@ -8,18 +8,14 @@ struct sWaveSC <: PhysicalModel
     # physical params
     # BCS gap
     Δ::Float64
-    # impurity level
-    εf::Float64
     # skewness of the density of states
     κ::Float64
-    # Hubbard repulsion
-    U::Float64
     # hybridization strength
     Γ::Float64
 end
 
-sWaveSC() = sWaveSC(0.1, 0., 0., 0., 0.5/pi)
-sWaveSC(Δ) = sWaveSC(Δ, 0., 0., 0., 0.5/pi)
+sWaveSC() = sWaveSC(0.1, 0., 0.5/pi)
+sWaveSC(Δ) = sWaveSC(Δ, 0., 0.5/pi)
 
 struct Flat{T<:Real} <: PhysicalModel
     Δ::T
@@ -27,6 +23,24 @@ struct Flat{T<:Real} <: PhysicalModel
 end
 
 Flat() = Flat(0., 0.5/pi)
+
+
+# Hybridization function of the double SC lead AIM 
+# in the scalar representation
+# Taken from Zalom's paper arXiv:2307.07479 Eq. (19)
+# Compared to sWaveSc it has an additional parameter ϕ
+# which is the difference of SC phases in both leads
+struct DoubleLeadSC <: PhysicalModel
+    # BCS gap
+    Δ::Float64
+    # hybridization strength
+    Γ::Float64
+    # phase difference
+    ϕ::Float64
+end
+
+DoubleLeadSC() = DoubleLeadSC(0.01, 0.5, 0.)
+DoubleLeadSC(Δ, ϕ) = DoubleLeadSC(Δ, 0.5, ϕ)
 
 ################################################
 # PREDEFINED HYBRIDIZATIONS

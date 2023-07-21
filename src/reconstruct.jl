@@ -96,28 +96,18 @@ function reconstructhybri(chains::Vector{WilsonChain}, ωs; smear=0.1)
     return hybri/Nz
 end
 
-function spectralfunction(chains::Vector{WilsonChain}; zaveraging=false, save=true, takezeroth=true)
+function spectralfunction(chains::Vector{WilsonChain}; save=true)
     Nz = length(chains)
     freqs = Array{Vector{ComplexF64}}(undef, Nz)
     weights = Array{Vector{ComplexF64}}(undef, Nz)
     
     for (i, chain) in enumerate(chains)
         println("Diagonalising for (i, Nz) = ($(i), $(Nz))")
-        freqs[i], weights[i] = spectralfunction(chain; takezeroth=takezeroth)
+        freqs[i], weights[i] = spectralfunction(chain)
         if save == true
-            mkpath("$(i)")
-            open("$(i)/spec_f0.dat", "w") do f
+            mkpath("spectral_functions")
+            open("spectral_functions/$(i)_spec_f0.dat", "w") do f
                 writedlm(f, hcat(real.(freqs[i]), real.(weights[i])))
-            end
-        end
-    end
-
-    if zaveraging == true
-        freqs = (1/Nz) .* reduce(+, freqs)
-        weights = (1/Nz) .* reduce(+, weights)
-        if save == true
-            open("spec_f0_zaveraged.dat", "w") do f
-                writedlm(f, hcat(real.(freqs), real.(weights)))
             end
         end
     end
@@ -125,10 +115,10 @@ function spectralfunction(chains::Vector{WilsonChain}; zaveraging=false, save=tr
     return freqs, weights 
 end
 
-function spectralfunction(chain::WilsonChain; takezeroth=true)
+function buildhamiltonian(chain::WilsonChain)
     E = chain.E
     T = chain.T
-    N = numberchannels(chain)
+
     J = numbersites(chain)
     vecE = Array{Array{ComplexF64, 2}, 1}(undef, J)
     vecT = Array{Array{ComplexF64, 2}, 1}(undef, J)
@@ -140,21 +130,56 @@ function spectralfunction(chain::WilsonChain; takezeroth=true)
         vecE[j] = E[j, :, :]
     end
 
-    if takezeroth == true
-        H = Matrix(BlockTridiagonal(vecT, pushfirst!(vecE, zeros(N, N)), vecT))
-        vals, vecs = eigen(H)
-        weights = zeros(size(vecs, 2))
-        for (i, k) in enumerate(eachcol(vecs))
-            weights[i] = abs(k[1])^2
-        end
-        return vals, weights
-    else
-        H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT[2:end]))
-        vals, vecs = eigen(H)
-        weights = zeros(size(vecs, 2))
-        for (i, k) in enumerate(eachcol(vecs))
-            weights[i] = abs(k[1])^2
-        end
-        return vals, weights
+    H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT_adj[2:end]))
+
+    return H
+end
+
+function spectralfunction(chain::WilsonChain)
+    H = buildhamiltonian(chain)
+    vals, vecs = eigen(H)
+    weights = zeros(size(vecs, 2))
+    for (i, k) in enumerate(eachcol(vecs))
+        weights[i] = abs(k[1])^2
+        # weights[i] = real.(k[1]'*k[2])
     end
+    return vals, weights
+end
+
+################
+# BROADENING   #
+################
+
+function gaussiankernel(ω, E, weight; η=0.02)
+    σ = η*abs(E)
+    A = (1/sqrt(2pi))*(1/σ)
+    value = A*weight*exp(-(ω - E)^2/(2*σ^2))
+    return value
+end
+
+function broaden(ωs, energies, weights)
+    spectralfunction = zeros(length(ωs))
+    for (i, E) in enumerate(energies)
+        weight = weights[i]
+        spectralfunction += gaussiankernel.(ωs, E, weight)
+    end
+    return spectralfunction
+end
+
+function broadenaverage(lb, ub, Nω, Nz; save=true)
+    ωs = range(lb, ub, Nω)
+    result = zeros(Nω)
+    
+    for i in 1:Nz
+        data = readdlm("spectral_functions/$(i)_spec_f0.dat")
+        energies = data[:, 1]
+        weights = data[:, 2]
+        result += broaden(ωs, energies, weights)
+    end
+    result = result ./ Nz
+
+    open("spectral_function.dat", "w") do f
+        writedlm(f, [ωs result])
+    end
+    return ωs, result
 end

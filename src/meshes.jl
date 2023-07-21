@@ -18,6 +18,13 @@ DiscretizationParams() = DiscretizationParams(2.,
                                               1e-5
 )
 
+DiscretizationParams(Λ, zs, J) = DiscretizationParams(Λ, 
+                                                      zs,
+                                                      J,
+                                                      500000,
+                                                      1e-5
+)
+
 """
     Mesh super type.
 """

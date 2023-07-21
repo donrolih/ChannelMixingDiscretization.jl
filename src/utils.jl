@@ -12,7 +12,7 @@ end
 """
     Generates ω support of ρ for a given mesh type and model. 
 """
-function generateω(mesh::LogMesh, model::PhysicalModel; offset=big"1e-18")
+function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-12)
     # mesh parameters
     ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
     Δ = model.Δ
@@ -74,6 +74,31 @@ function generateρs(ρ, ωs)
     ρs = reduce(hcat, ρs)
     ρs = reshape(ρs, n, n, :)
     return permutedims(ρs, (3, 1, 2))
+end
+
+########################
+# WRAPPER FUNCTION
+########################
+
+function discretize(ρ::Function, model::PhysicalModel, params::DiscretizationParams; save=false)
+    
+    ω0 = 1e-10
+    Nω = 10000
+    D = 1.
+    
+    mesh = LogMesh(ω0, Nω, D)
+
+    # mapping to star model
+    starH = discmodel(ρ, mesh, model, params)
+    # mapping to chain
+    J = params.J
+    chains = maptochains(starH; m=J)
+
+    if save == true
+        savechains(chains)
+    end
+
+    return chains
 end
 
 ########################
