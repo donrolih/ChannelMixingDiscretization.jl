@@ -4,19 +4,33 @@ struct StarHamiltonian
     zs::Vector
 end
 
-struct Ticker
+abstract type Ticker end
+
+struct Adaptive <: Ticker
     R::AbstractArray 
     iR::Interpolations.Extrapolation
-    function Ticker(ωs::AbstractArray, weights::AbstractArray)
+    function Adaptive(ωs::AbstractArray, weights::AbstractArray)
         R = cumul_integrate(ωs, weights)
         iR = linear_interpolation(R, ωs, extrapolation_bc=Line())
         return new(R, iR)
     end
 end
 
+struct Fixed <: Ticker 
+    Δ::Real
+    function Fixed(model::PhysicalModel)
+        return new(model.Δ)
+    end
+end
+
 # guiding function, also called ν(x)
+# this is adaptive, based on CPC 180 (2009) 1271-1276
+# this is the grid discretization function
+# for each continuous index x it returns a value in the energy support
+# for x in [1, 2] it is equal to the bandwidth and then it approaches
+# the lowest energy scales
 function ε(x::Real,
-           ticker::Ticker,
+           ticker::Adaptive,
            discparams::DiscretizationParams,
            mesh::Mesh)
     Λ = discparams.Λ
@@ -28,16 +42,41 @@ function ε(x::Real,
     else
         # adaptive
         return iR(RD*Λ^(2 - x))
-        # fixed log-gap
-        # return Λ^(2 - x)
     end
 end
+
 
 function ε(xs::AbstractArray,
            ticker::Ticker,
            discparams::DiscretizationParams,
            mesh::Mesh)
     return [ε(x, ticker, discparams, mesh) for x in xs]
+end
+
+# this implements fixed logaritmic discretization (Wilson)
+# or sclog discretization type JPSC 61.3239
+
+function ε(x::Real, ticker::Fixed, params::DiscretizationParams, mesh::Mesh)
+    disctype = params.disctype
+    D = mesh.D
+    Δ = ticker.Δ
+    Λ = params.Λ
+    if disctype === :log
+        if x ≤ 2
+            return D
+        else
+            return Δ + (D - Δ)*Λ^(2 - x)
+        end
+    elseif disctype === :sclog
+        if x ≤ 2
+            return D
+        else
+            ξ2 = D^2 - Δ^2  
+            return sqrt(Δ^2 + ξ2*Λ^(4-2x))
+        end
+    else
+        error("unknown discretization type!")
+    end
 end
 
 function getweights(ρs::Vector)
@@ -62,7 +101,7 @@ function getTEfunctions(ωs::Vector,
                         ρs::Vector,
                         params::DiscretizationParams,
                         mesh::Mesh,
-                        weights::Vector)
+                        weights::Vector, model)
 
     ωbranches = Dict()
     ρbranches = Dict()
@@ -89,7 +128,12 @@ function getTEfunctions(ωs::Vector,
         ωbranch = ωbranches[sign]
         
         weightbranch = weightbranches[sign]
-        ticker = Ticker(sign*ωbranch, weightbranch)
+
+        if params.disctype === :adaptive
+            ticker = Adaptive(sign*ωbranch, weightbranch)
+        else
+            ticker = Fixed(model)
+        end
 
         # get the R(ω) function, see Appendix 1 of PRB 93, 035102 (2016)
         integratedρ = sign .* cumul_integrate(ωbranch, ρbranch)
@@ -204,7 +248,7 @@ function discmodel(ρ::Function, mesh::Mesh, model::PhysicalModel, params::Discr
         Nbands = 1
         println("Single band case!")
         println("Getting functions of representative energies and hoppings ...")
-        Tfunctions, Efunctions = getTEfunctions(ωs, ρs, params, mesh, weights)
+        Tfunctions, Efunctions = getTEfunctions(ωs, ρs, params, mesh, weights, model)
         println("Done!")
         println("Generating discrete model ...")
         Ts, Es = getTElists(Efunctions, Tfunctions, ρ, params, Nbands)
@@ -229,7 +273,7 @@ function discmodel(ρ::Function, mesh::Mesh, model::PhysicalModel, params::Discr
         for i in 1:Nbands
             println("Calculating for band number $(i) ...")
             start = time()
-            tfs, efs = getTEfunctions(ωs, ρeval[:, i], params, mesh, weights)
+            tfs, efs = getTEfunctions(ωs, ρeval[:, i], params, mesh, weights, model)
             stop = time()
             elapsed = stop - start
             println("Time elapsed for band number $(i): $(round(elapsed; digits=3)) s")

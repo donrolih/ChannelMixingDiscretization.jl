@@ -10,23 +10,31 @@ struct DiscretizationParams
     # threshold to set an occasional small eigenvalue of ρ to zero
     threshold::Real
     # discretization type
-    # disctype::Symbol
+    disctype::Symbol
 end
 
 DiscretizationParams() = DiscretizationParams(2., 
                                               collect(range(0.05, 0.95, 10)),
                                               35,
                                               500000,
-                                              1e-5
-                                            #   :adaptive
+                                              1e-5,
+                                              :adaptive
 )
 
 DiscretizationParams(Λ, zs, J) = DiscretizationParams(Λ, 
                                                       zs,
                                                       J,
                                                       500000,
-                                                      1e-5
-                                                    #   :adaptive
+                                                      1e-5,
+                                                      :adaptive
+)
+
+DiscretizationParams(Λ, zs, J, disctype) = DiscretizationParams(Λ, 
+                                                      zs,
+                                                      J,
+                                                      500000,
+                                                      1e-5,
+                                                      disctype
 )
 
 """
