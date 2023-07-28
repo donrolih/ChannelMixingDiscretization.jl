@@ -1,6 +1,6 @@
-function gramschmidt(u, Q; maxiter=3, α=big"0.5")
+function gramschmidt(u, Q; maxiter=3, α=big"0.7")
     r = norm(u'*u)
-    r1 = 0.
+    r1 = big"0."
     u_start = u
     for i in 1:maxiter
         u = u - Q*Q'*u
@@ -40,7 +40,7 @@ function tridiagonalize(A, q, m)
         newQj = gramschmidt(newQj, Q[:, n+1:end])
         Q = hcat(Q, newQj)
         
-        if (j != m) && norm(F.R, 1) < 1e-20
+        if (j != m) && norm(F.R, 1) < 1e-12
             println("WARNING! Bad Krylov space!")
         end
         
@@ -53,4 +53,45 @@ function tridiagonalize(A, q, m)
     # return a dictionary of arrays; keys denote the (off)-diagonal index
     diags = Dict(-1 => Bl, 0 => Al, 1 => Bu[1:end-1, :, :])
     return diags
+end
+
+function rkpw(N, nodes, weights)
+    @assert N > 0 "N should be positive!"
+    Nmax = size(nodes, 1)
+    @assert N ≤ size(nodes, 1) "N cannot be greater than the number of nodes"
+    
+    p0 = deepcopy(nodes)
+    p1 = zeros(Nmax)
+    p1[1] = weights[1]
+
+    for n in 1:(Nmax-1)
+        pn = weights[n + 1]
+        γ = 1.
+        σ = 0.
+        τ = 0
+        λ = nodes[n+1]
+        for k in 1:n+1
+            ρ = p1[k] + pn
+            tmp = γ*ρ
+            τσ = σ
+            if ρ ≤ 0
+                γ = 1
+                σ = 0
+            else
+                γ = p1[k]/ρ
+                σ = pn/ρ
+            end
+            τk = σ*(p0[k] - λ) - γ*τ
+            p0[k] = p0[k] - (τk - τ)
+            τ = τk
+            if σ ≤ 0 
+                pn = τσ*p1[k]
+            else
+                pn = τ^2/σ
+            end
+            τσ = σ
+            p1[k] = tmp
+        end
+    end
+    return [p0[1:N] p1[1:N]]
 end

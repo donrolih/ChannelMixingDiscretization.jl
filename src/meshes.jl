@@ -9,6 +9,8 @@ struct DiscretizationParams
     Nx::Integer
     # threshold to set an occasional small eigenvalue of ρ to zero
     threshold::Real
+    # discretization type
+    # disctype::Symbol
 end
 
 DiscretizationParams() = DiscretizationParams(2., 
@@ -16,6 +18,7 @@ DiscretizationParams() = DiscretizationParams(2.,
                                               35,
                                               500000,
                                               1e-5
+                                            #   :adaptive
 )
 
 DiscretizationParams(Λ, zs, J) = DiscretizationParams(Λ, 
@@ -23,6 +26,7 @@ DiscretizationParams(Λ, zs, J) = DiscretizationParams(Λ,
                                                       J,
                                                       500000,
                                                       1e-5
+                                                    #   :adaptive
 )
 
 """

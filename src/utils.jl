@@ -18,9 +18,10 @@ function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-12)
     Δ = model.Δ
 
     negfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
-    posfreqs = exp.(range(log(ω0),log(D - Δ), Int(Nω/2) - 1)) .+ Δ
+    posfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
 
-    return vcat(-reverse(negfreqs), [-Δ - offset, Δ + offset], posfreqs)
+    # return vcat(-reverse(negfreqs), [-Δ - offset, Δ + offset], posfreqs)
+    return vcat(-reverse(negfreqs), posfreqs)
 end
 
 function generateω(mesh::LinMesh, model::PhysicalModel)
@@ -82,8 +83,8 @@ end
 
 function discretize(ρ::Function, model::PhysicalModel, params::DiscretizationParams; save=false)
     
-    ω0 = 1e-10
-    Nω = 10000
+    ω0 = 1e-15
+    Nω = 5000
     D = 1.
     
     mesh = LogMesh(ω0, Nω, D)
