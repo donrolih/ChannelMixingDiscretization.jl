@@ -65,6 +65,8 @@ end
         - Gragg and Harrod, Numer. Math 44, 317-335 (1984),
         - Gautschi,  Journal of Computational and Applied Mathematics 178, 215–234 (2005),
         - de Vega et. al., Phys. Rev. B 92, 155126 (2015) (mentioned in the Appendix).
+
+    Notation follows Gragg and Harrod's paper.
 """
 function rkpw(N, nodes, weights)
     @assert N > 0 "N should be positive!"
