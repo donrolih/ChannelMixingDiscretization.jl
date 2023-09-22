@@ -14,4 +14,5 @@ pkg> add https://github.com/donrolih/ChannelMixingDiscretization.jl
 ```
 
 # Examples
-Some examples are in the /notebooks folder. 
+Some examples are in the /notebooks folder. Most of them take a hybridisation function, discretize it and
+then reconstruct it to compare with the original. 
