@@ -12,3 +12,6 @@ Since the package is still in development, you should add this GitHub repository
 julia> ]
 pkg> add https://github.com/donrolih/ChannelMixingDiscretization.jl
 ```
+
+# Examples
+Some examples are in the /notebooks folder. 
