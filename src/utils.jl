@@ -200,7 +200,7 @@ function loadchains()
     end
 end
 
-# Utility functions for checking the scaling properties of the coefficients
+# Utility function for checking the scaling properties of the coefficients
 """
     Given a vector of Wilson chains return the dictionaries of energies and
     hoppings along the chain. This currently only works for one and two channel
