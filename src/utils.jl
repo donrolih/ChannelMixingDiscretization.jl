@@ -198,5 +198,33 @@ function loadchains()
     else
         error("Directory E_T_matrices does not exist in the working directory!")
     end
+end
 
+# Utility functions for checking the scaling properties of the coefficients
+"""
+    Given a vector of Wilson chains return the dictionaries of energies and
+    hoppings along the chain. This currently only works for one and two channel
+    models. By default the data is taken from the first chain.
+"""
+function scaling(chains::Vector{WilsonChain}; chainindex=1)
+    E = chains[chainindex].E
+    T = chains[chainindex].T
+    _, Nbands, _ = size(T)
+    if Nbands == 1
+        es = Dict("diag" => convert.(Complex{Float64}, vec(E)))
+        ts = Diag("diag" => convert.(Complex{Float64}, vec(T)))
+        return es, ts
+    elseif Nbands == 2
+        es = Dict()
+        es["diag"] = convert.(Complex{Float64}, vec(E[:, 1, 1]))
+        es["offdiag"] = convert.(Complex{Float64}, vec(E[:, 1, 2]))
+        ts = Dict()
+        ts["diag"] = convert.(Complex{Float64}, vec(T[:, 1, 1]))
+        ts["offdiag"] = convert.(Complex{Float64}, vec(T[:, 1, 2]))
+        return es, ts
+    else
+        # if the number of bands is greater than 2 the user should manually
+        # pick the elements of the matrix they want to check 
+        error("Number of bands is $(Nbands), don't know what to show you!")
+    end
 end
