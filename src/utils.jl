@@ -212,7 +212,7 @@ function scaling(chains::Vector{WilsonChain}; chainindex=1)
     _, Nbands, _ = size(T)
     if Nbands == 1
         es = Dict("diag" => convert.(Complex{Float64}, vec(E)))
-        ts = Diag("diag" => convert.(Complex{Float64}, vec(T)))
+        ts = Dict("diag" => convert.(Complex{Float64}, vec(T)))
         return es, ts
     elseif Nbands == 2
         es = Dict()
