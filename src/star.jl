@@ -158,15 +158,14 @@ function getTEfunctions(ωs::Vector,
                 error("negative argument when calculating the hopping function!")
             end
         end
-
-
+        
         Tfunctions[sign] = Tfunc
         # it has to be J + 2 because of the extended bound of integration below
         xs = range(1, params.J + 2, params.Nx)
         # inverse of the R function
         iRfunc = linear_interpolation(integratedρ, sign.*ωbranch, extrapolation_bc=Line())
 
-        # change the integration order to avoid big+small
+        # change the integration order to avoid big + small summation
         RR = vcat(cumul_integrate(reverse(xs), Rfunc.(ε(reverse(xs), ticker, params, mesh))))
         RRfunc = linear_interpolation(xs, reverse(RR), extrapolation_bc=Line())
         Efunc(x) = sign*(iRfunc.(RRfunc(x+1) - RRfunc(x)))
