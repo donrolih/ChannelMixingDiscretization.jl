@@ -1,14 +1,11 @@
 """
-    Given an array of K points ωs = [ω_1, ..., ω_K] and the values of the function f in an array values at these points, calculate the integral 
-    ```math
-    F(\omega) = \int_{\omega_1}^{\omega} f(\omega') \mathrm{d} \omega'
-    ```
+    Given an array of K points ωs = [ω_1, ..., ω_K] and the values of the function f in an array values at these points, calculate the integral
     using Gaussian quadrature from the QuadGK.jl package. If you know there
     is a singularity inside the interval (ω_1, ω_K), you should provide an
     array of singularities as an optional parameter.
 """
 function myintegrate(ωs, values; singularities=[])
-    func = interpolate(ωs, values)
+    func = myinterpolate(ωs, values)
     K = length(ωs)
     cumulint = zeros(Float64, K)
     errors = zeros(Float64, K)
