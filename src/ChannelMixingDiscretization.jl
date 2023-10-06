@@ -31,5 +31,6 @@ include("tridiagonalization.jl")
 include("chain.jl")
 include("utils.jl")
 include("reconstruct.jl")
+include("integrators.jl")
 
 end

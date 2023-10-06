@@ -7,7 +7,7 @@
     is a singularity inside the interval (ω_1, ω_K), you should provide an
     array of singularities as an optional parameter.
 """
-function integrate(ωs, values; singularities=[])
+function myintegrate(ωs, values; singularities=[])
     func = interpolate(ωs, values)
     K = length(ωs)
     cumulint = zeros(Float64, K)
@@ -24,9 +24,10 @@ function integrate(ωs, values; singularities=[])
     else
         error("integration with singularities not yet implemented")
     end
+    return cumulint, errors
 end
 
-function interpolate(xs, ys; type="linear")
+function myinterpolate(xs, ys; type="linear")
     if type == "linear"
         return linear_interpolation(xs, ys)
     elseif type == "cubic"
