@@ -9,6 +9,7 @@ using BlockBandedMatrices
 using NumericalIntegration
 using Interpolations
 using DelimitedFiles, JLD2
+using QuadGK
 
 # from meshes.jl
 export LogMesh, LinMesh, DiscretizationParams
