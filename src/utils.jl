@@ -12,7 +12,7 @@ end
 """
     Generates ω support of ρ for a given mesh type and model. 
 """
-function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-12)
+function generateω(mesh::LogMesh, model::PhysicalModel)
     # mesh parameters
     ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
     Δ = model.Δ
@@ -20,6 +20,7 @@ function generateω(mesh::LogMesh, model::PhysicalModel; offset=1e-12)
     negfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
     posfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
 
+    # This is the 1st version
     # return vcat(-reverse(negfreqs), [-Δ - offset, Δ + offset], posfreqs)
     return vcat(-reverse(negfreqs), posfreqs)
 end
