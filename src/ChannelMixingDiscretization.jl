@@ -10,6 +10,7 @@ using NumericalIntegration
 using Interpolations
 using DelimitedFiles, JLD2
 using QuadGK
+using DataInterpolations
 
 # from meshes.jl
 export LogMesh, LinMesh, DiscretizationParams

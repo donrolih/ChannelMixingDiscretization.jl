@@ -1,35 +1,40 @@
 """
-    Given an array of K points ωs = [ω_1, ..., ω_K] and the values of the function f in an array values at these points, calculate the integral
-    using Gaussian quadrature from the QuadGK.jl package. If you know there
-    is a singularity inside the interval (ω_1, ω_K), you should provide an
-    array of singularities as an optional parameter.
+    Cumulative integral of a function given as tabulate values in arrays xs and ys.
 """
-function myintegrate(ωs, values; singularities=[])
-    func = myinterpolate(ωs, values)
-    K = length(ωs)
-    cumulint = zeros(Float64, K)
-    errors = zeros(Float64, K)
-    lb = ωs[1] # lower bound of integration
-    if isempty(singularities)
-        for (i, ω) in enumerate(ωs)
-            if i > 1
-                int, error = quadgk(x -> func(x), lb, ω)
-                cumulint[i] = int
-                errors[i] = error
-            end
-        end
-    else
-        error("integration with singularities not yet implemented")
-    end
-    return cumulint, errors
+function cumintegrate(xs, ys)
+    # trapezoid rule
+    xdif = diff(xs)
+    yavg = consecutive((x, y) -> (x + y)/2, ys)
+    cumint = cumsum(xdif .* yavg)
+    # add zero at the start
+    pushfirst!(cumint, 0.)
+    return cumint
 end
 
-function myinterpolate(xs, ys; type="linear")
-    if type == "linear"
-        return linear_interpolation(xs, ys)
-    elseif type == "cubic"
-        return cubic_spline_interpolation(xs, ys)
-    else
-        error("type of interpolation unknown, try linear or cubic")
+function cumintegrate(xs, ys, lower, upper)
+    # assume upper < xs[end] and lower < xs[1]
+    upper < xs[end] || error("upper bound in cumintegrate is outside the tabulated interval")
+    lower < xs[1] || error("lower bound in cumintegrate should be outside the tabulated interval")
+    # the data should be sorted by xs
+    p = sortperm(xs)
+    xs, ys = xs[p], ys[p]
+    len = length(xs)
+    sum = 0.
+    cumint = zeros(len)
+    for i in 2:len
+        x0, y0 = xs[i-1], ys[i-1]
+        x1, y1 = xs[i], ys[i]
+        yavg = (y1 + y0) / 2
+        dx = 0.
+        if x0 < upper & x1 ≤ upper
+            dx = x1 - x0
+        elseif x0 < upper & x1 > upper
+            dx = upper - x0
+        else
+            dx = 0.
+        end
+        sum += dx * yavg
+        cumint[i] = sum
     end
+    return cumint
 end
