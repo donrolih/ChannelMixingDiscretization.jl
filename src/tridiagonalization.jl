@@ -1,10 +1,13 @@
-function gramschmidt(u, Q; maxiter=3, α=big"0.2")
+function gramschmidt(u, Q; maxiter=3, α=big"0.5")
+    # println(size(u'*u))
     r = norm(u'*u)
     r1 = big"0."
     u_start = u
     for i in 1:maxiter
         u = u - Q*Q'*u
         r1 = norm(u'*u)
+        # println("pre norm: ", r)
+        # println("after norm: ", r1)
         if r1 > α*r
             break
         end
@@ -33,6 +36,7 @@ function tridiagonalize(A, q, m)
     B = zeros(Complex{BigFloat}, m+1, n, n)
     Bu = zeros(Complex{BigFloat}, m, n, n)
     Q = hcat(zeros(BigFloat, size(q)), q)
+    # println("starting vector ortho: ", float.(q'*q))
     for j in 1:m
         Qj = Q[:, end-(n-1):end]
         Uj = A*Qj - Q[:, (end - 2n + 1):(end - n)]*(B[j, :, :]')
@@ -46,7 +50,7 @@ function tridiagonalize(A, q, m)
         newQj = gramschmidt(newQj, Q[:, n+1:end])
         Q = hcat(Q, newQj)
         
-        if (j != m) && norm(F.R, 1) < 1e-12
+        if (j != m) && norm(F.R, 1) < 1e-20
             println("WARNING! Bad Krylov space!")
         end
         

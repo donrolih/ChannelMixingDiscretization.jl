@@ -115,7 +115,7 @@ function spectralfunction(chains::Vector{WilsonChain}; save=true)
     return freqs, weights 
 end
 
-function buildhamiltonian(chain::WilsonChain)
+function buildhamiltonian(chain::WilsonChain; with_imp=false)
     E = chain.E
     T = chain.T
 
@@ -129,9 +129,38 @@ function buildhamiltonian(chain::WilsonChain)
         vecT_adj[j] = t'
         vecE[j] = E[j, :, :]
     end
+    
+    if with_imp
+        # with the impurity site
+        H = Matrix(BlockTridiagonal(vecT[1:end], vcat([zeros(ComplexF64, 2, 2)], vecE), vecT_adj[1:end]))
+        return H
+    else
+        # remove the impurity site
+        H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT_adj[2:end]))
+        return H
+    end
+end
 
-    H = Matrix(BlockTridiagonal(vecT[2:end], vecE, vecT_adj[2:end]))
-
+function buildhamiltonian(star::StarHamiltonian; znum=1)
+    Epos = convert.(ComplexF64, star.E[1][:, znum, :, :])
+    Eneg = convert.(ComplexF64, star.E[-1][:, znum, :, :])
+    T = convert.(ComplexF64, getTlist(star)[:, znum, :, :])
+    J, N, _ = size(Epos)
+    H = zeros(ComplexF64, (2J + 1)*N, (2J + 1)*N)
+    vecEpos = Array{Array{ComplexF64, 2}, 1}(undef, J)
+    vecEneg = Array{Array{ComplexF64, 2}, 1}(undef, J)
+    for j in 1:J 
+        vecEpos[j] = Epos[j, :, :]
+        vecEneg[j] = Eneg[j, :, :]
+    end
+    vecEneg = reverse(vecEneg)
+    H = Matrix(BlockDiagonal(vcat([zeros(ComplexF64, N, N)], vecEneg, vecEpos)))
+    v1 = reshape(transpose(T[:, 1, :]), 2J*N)
+    v2 = reshape(transpose(T[:, 2, :]), 2J*N)
+    H[1, (N + 1):end] = v1
+    H[2, (N + 1):end] = v2
+    H[(N + 1):end, 1] = conj.(v1)
+    H[(N + 1):end, 2] = conj.(v2)
     return H
 end
 
