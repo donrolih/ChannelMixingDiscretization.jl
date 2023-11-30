@@ -55,7 +55,7 @@ end
 
 # this implements fixed logaritmic discretization (Wilson)
 # or sclog discretization type JPSC 61.3239
-
+# this is the non-adaptive way of doing this (a la Wilson)
 function ε(x::Real, ticker::Fixed, params::DiscretizationParams, mesh::Mesh)
     disctype = params.disctype
     D = mesh.D
@@ -79,6 +79,10 @@ function ε(x::Real, ticker::Fixed, params::DiscretizationParams, mesh::Mesh)
     end
 end
 
+"""
+    Calculate the weights for the adaptive discretization scheme. These enter
+    into the integrals for discretization.
+"""
 function getweights(ρs::Vector)
     el = first(ρs)
     if isa(el, Number) || isa(el, Complex)
@@ -136,6 +140,8 @@ function getTEfunctions(ωs::Vector,
         end
 
         # get the R(ω) function, see Appendix 1 of PRB 93, 035102 (2016)
+        # integrate the DOS (weights for each channel)
+        # then interpolate the points you get
         integratedρ = sign .* cumul_integrate(ωbranch, ρbranch)
         Rfunc = linear_interpolation(sign.*ωbranch, integratedρ, extrapolation_bc=Line())
         
@@ -152,15 +158,14 @@ function getTEfunctions(ωs::Vector,
                 error("negative argument when calculating the hopping function!")
             end
         end
-
-
+        
         Tfunctions[sign] = Tfunc
         # it has to be J + 2 because of the extended bound of integration below
         xs = range(1, params.J + 2, params.Nx)
         # inverse of the R function
         iRfunc = linear_interpolation(integratedρ, sign.*ωbranch, extrapolation_bc=Line())
 
-        # change the integration order to avoid big+small
+        # change the integration order to avoid big + small summation
         RR = vcat(cumul_integrate(reverse(xs), Rfunc.(ε(reverse(xs), ticker, params, mesh))))
         RRfunc = linear_interpolation(xs, reverse(RR), extrapolation_bc=Line())
         Efunc(x) = sign*(iRfunc.(RRfunc(x+1) - RRfunc(x)))

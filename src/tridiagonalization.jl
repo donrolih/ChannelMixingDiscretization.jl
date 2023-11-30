@@ -1,10 +1,13 @@
-function gramschmidt(u, Q; maxiter=3, α=big"0.7")
+function gramschmidt(u, Q; maxiter=3, α=big"0.5")
+    # println(size(u'*u))
     r = norm(u'*u)
     r1 = big"0."
     u_start = u
     for i in 1:maxiter
         u = u - Q*Q'*u
         r1 = norm(u'*u)
+        # println("pre norm: ", r)
+        # println("after norm: ", r1)
         if r1 > α*r
             break
         end
@@ -17,6 +20,12 @@ function gramschmidt(u, Q; maxiter=3, α=big"0.7")
     return u
 end
 
+"""
+    Given a symmetric matrix A and a starting (block) vector q tridiagonalize the matrix A where the basis consists of Krylov vectors constructed from q.
+
+    Implementation follows:
+        - Grimes et. al., A shifted block Lanczos algorithm for solving sparse symmetric generalized eigenproblems, SIAM J. Matrix Anal. Applied 15, 228-272, 1994.
+"""
 function tridiagonalize(A, q, m)
     # A has shape 2JI x 2JI, q is a 'thin matrix' of shape 2JI x I
     # I is (this is also Nbands)
@@ -27,6 +36,7 @@ function tridiagonalize(A, q, m)
     B = zeros(Complex{BigFloat}, m+1, n, n)
     Bu = zeros(Complex{BigFloat}, m, n, n)
     Q = hcat(zeros(BigFloat, size(q)), q)
+    # println("starting vector ortho: ", float.(q'*q))
     for j in 1:m
         Qj = Q[:, end-(n-1):end]
         Uj = A*Qj - Q[:, (end - 2n + 1):(end - n)]*(B[j, :, :]')
@@ -40,7 +50,7 @@ function tridiagonalize(A, q, m)
         newQj = gramschmidt(newQj, Q[:, n+1:end])
         Q = hcat(Q, newQj)
         
-        if (j != m) && norm(F.R, 1) < 1e-12
+        if (j != m) && norm(F.R, 1) < 1e-20
             println("WARNING! Bad Krylov space!")
         end
         
@@ -107,4 +117,28 @@ function rkpw(N, nodes, weights)
         end
     end
     return [p0[1:N] p1[1:N]]
+end
+
+function blocklanczos(H::Matrix{Complex{T}}, Q1::VecOrMat{Complex{T}}, J::Integer) where T <: Real
+    @assert Q1'*Q1 ≈ I "the initial block vector for Lanczos tridiagonalization should be an orthogonal matrix"
+    n, p = size(Q1)
+    @assert J ≤ n/p "the number of steps is too large for matrix size" 
+    # the storage of Q blocks
+    Q = Vector{Matrix{T}}(undef, J)
+    Q[1] = Q1
+    A = Vector{Matrix{T}}(undef, J)
+    B = Vector{Matrix{T}}(undef, J)
+    B[1] = zeros(T, p, p)
+    for j in 1:J
+        Qjj = j == 1 ? zeros(T, n, p) : Q[j - 1]
+        U = H*Q[j] - Qjj * B[j]'
+        A[j] = Q[j]'* U
+        R = U - Q[j]*A[j]
+        F = qr(R)
+        if j == J break end
+        Q[j+1] = Matrix(F.Q)
+        B[j+1] = Matrix(F.R)
+    end
+    # set the last diagonal element
+    return A, B[2:end], adjoint.(B[2:end])
 end

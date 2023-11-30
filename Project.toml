@@ -6,12 +6,14 @@ version = "1.0.0-DEV"
 [deps]
 BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
 BlockDiagonals = "0a1fb500-61f7-11e9-3c65-f5ef3456f9f0"
+DataInterpolations = "82cc6244-b520-54b8-b5a6-8a565e85f1d0"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NumericalIntegration = "e7bfaba1-d571-5449-8927-abc22e82249b"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 
 [compat]
 BlockDiagonals = "0.1.41"
