@@ -201,6 +201,36 @@ function loadchains()
     end
 end
 
+# Utility function for generating files for NRGLjubljana for a given z number
+function nrgfilesSPSU2(chains::Vector{WilsonChain})
+    Nz = length(chains)
+    for i in 1:Nz
+        mkdir("$(i)")
+        T = chains[i].T
+        E = chains[i].E
+        
+        open("xi.dat", "w") do io
+            ξ = convert.(Float64, real.(T[2:end, 1, 1]))
+            writedlm(io, ξ, ',')
+        end
+
+        open("sckappa.dat", "w") do io
+            κ = convert.(Float64, real.(T[2:end, 1, 2]))
+            writedlm(io, κ, ',')
+        end
+
+        open("zeta.dat", "w") do io
+            ζ = convert.(Float64, real.(E[:, 1, 1]))
+            writedlm(io, ζ, ',')
+        end
+
+        open("scdelta.dat", "w") do io
+            Δ = convert.(Float64, real.(E[:, 1, 1]))
+            writedlm(io, Δ, ',')
+        end
+    end
+end
+
 # Utility function for checking the scaling properties of the coefficients
 """
     Given a vector of Wilson chains return the dictionaries of energies and
