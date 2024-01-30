@@ -66,6 +66,7 @@ function maptochains(starH::StarHamiltonian; m=nothing)
             # Matrix(F.Q) returns the 'thin' Q-matrix with ortonormal columns
             # permuting this is necessary because Julia is a column-major language
             q = permutedims(reshape(permutedims(Matrix(F.Q), [2, 1]), (Nbands, :)), Nbands:-1:1)
+            # println(q)
             H = BlockDiagonal([Elist[k, i, :, :] for k in 1:J])
             # println(typeof(H))
             diags = tridiagonalize(H, q, m)

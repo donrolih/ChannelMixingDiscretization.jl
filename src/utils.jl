@@ -205,27 +205,33 @@ end
 function nrgfilesSPSU2(chains::Vector{WilsonChain})
     Nz = length(chains)
     for i in 1:Nz
-        mkdir("$(i)")
+        mkpath("$(i)")
         T = chains[i].T
         E = chains[i].E
         
-        open("xi.dat", "w") do io
-            ξ = convert.(Float64, real.(T[2:end, 1, 1]))
+        # round to zero
+        eps = 1e-15
+        open("$(i)/xi.dat", "w") do io
+            ξ = Float64.(real.(T[2:end, 1, 1]))
+            ξ[abs.(ξ) .< eps] .= 0.
             writedlm(io, ξ, ',')
         end
 
-        open("sckappa.dat", "w") do io
-            κ = convert.(Float64, real.(T[2:end, 1, 2]))
+        open("$(i)/sckappa.dat", "w") do io
+            κ = Float64.(real.(T[2:end, 1, 2]))
+            κ[abs.(κ) .< eps] .= 0.
             writedlm(io, κ, ',')
         end
 
-        open("zeta.dat", "w") do io
-            ζ = convert.(Float64, real.(E[:, 1, 1]))
+        open("$(i)/zeta.dat", "w") do io
+            ζ = Float64.(real.(E[:, 1, 1]))
+            ζ[abs.(ζ) .< eps] .= 0.
             writedlm(io, ζ, ',')
         end
 
-        open("scdelta.dat", "w") do io
-            Δ = convert.(Float64, real.(E[:, 1, 1]))
+        open("$(i)/scdelta.dat", "w") do io
+            Δ = Float64.(real.(E[:, 1, 2]))
+            Δ[abs.(Δ) .< eps] .= 0.
             writedlm(io, Δ, ',')
         end
     end
