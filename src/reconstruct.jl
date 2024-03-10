@@ -179,7 +179,7 @@ end
 # BROADENING   #
 ################
 
-function gaussiankernel(ω, E, weight; η=0.02)
+function gaussiankernel(ω, E, weight; η=0.05)
     σ = η*abs(E)
     A = (1/sqrt(2pi))*(1/σ)
     value = A*weight*exp(-(ω - E)^2/(2*σ^2))
