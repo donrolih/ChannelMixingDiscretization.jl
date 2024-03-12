@@ -201,6 +201,71 @@ function loadchains()
     end
 end
 
+# Utility function for generating files for NRGLjubljana for a given z number
+function nrgfilesSPSU2(chains::Vector{WilsonChain})
+    Nz = length(chains)
+    for i in 1:Nz
+        mkpath("$(i)")
+        T = chains[i].T
+        E = chains[i].E
+        
+        # round to zero
+        eps = 1e-15
+        open("$(i)/xi.dat", "w") do io
+            ξ = Float64.(real.(T[2:end, 1, 1]))
+            ξ[abs.(ξ) .< eps] .= 0.
+            writedlm(io, ξ, ',')
+        end
+
+        open("$(i)/sckappa.dat", "w") do io
+            κ = Float64.(real.(T[2:end, 1, 2]))
+            κ[abs.(κ) .< eps] .= 0.
+            writedlm(io, κ, ',')
+        end
+
+        open("$(i)/zeta.dat", "w") do io
+            ζ = Float64.(real.(E[:, 1, 1]))
+            ζ[abs.(ζ) .< eps] .= 0.
+            writedlm(io, ζ, ',')
+        end
+
+        open("$(i)/scdelta.dat", "w") do io
+            Δ = Float64.(real.(E[:, 1, 2]))
+            Δ[abs.(Δ) .< eps] .= 0.
+            writedlm(io, Δ, ',')
+        end
+    end
+end
+
+function nrgfilesONEBAND(chains::Vector{WilsonChain}; bandrescale=1.)
+    Nz = length(chains)
+    for i in 1:Nz
+        mkpath("$(i)")
+        T = chains[i].T
+        E = chains[i].E
+
+        eps = 1e-15
+
+        open("$(i)/xi.dat", "w") do io
+            ξ = Float64.(real.(T[2:end, 1, 1])) .* bandrescale
+            ξ[abs.(ξ) .< eps] .= 0.
+            writedlm(io, ξ, ',')
+        end
+
+        open("$(i)/zeta.dat", "w") do io
+            ζ = Float64.(real.(E[:, 1, 1])) .* bandrescale
+            ζ[abs.(ζ) .< eps] .= 0.
+            writedlm(io, ζ, ',')
+        end
+
+        open("$(i)/theta.dat", "w") do io
+            θ = Float64(real(T[1, 1, 1])) .* bandrescale
+            θ = abs(θ) < eps ? 0. : θ
+            writedlm(io, θ, ',')
+        end
+    end
+end
+
 # Utility function for checking the scaling properties of the coefficients
 """
     Given a vector of Wilson chains return the dictionaries of energies and
