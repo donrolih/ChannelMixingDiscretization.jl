@@ -6,6 +6,10 @@
 # N. B.: we use BigFloats throughout; this improves acccuracy when hybridization
 # has divergences
 
+# Some references:
+#   - R. Zitko, CPC 180 (2009), 1271-1276,
+#   - Liu et.al., PRB 93, 035102 (2016).
+
 ################################################################################
 # GRID STRUCTS and GUIDING FUNCTIONS FOR FIXED AND ADAPTIVE GRIDS
 ################################################################################
