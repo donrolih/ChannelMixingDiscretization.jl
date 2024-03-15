@@ -12,6 +12,9 @@ using DelimitedFiles, JLD2
 using QuadGK
 using DataInterpolations
 
+# precision when using BigFloats
+setprecision(256)
+
 # from meshes.jl
 export LogMesh, LinMesh, DiscretizationParams
 # from models.jl
