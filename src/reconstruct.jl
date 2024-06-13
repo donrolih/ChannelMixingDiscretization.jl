@@ -170,7 +170,7 @@ function spectralfunction(chain::WilsonChain)
     weights = zeros(size(vecs, 2))
     for (i, k) in enumerate(eachcol(vecs))
         weights[i] = abs(k[1])^2
-        # weights[i] = real.(k[1]'*k[2])
+        # weights[i] = real.(k[1]'*k[2]) # this is for the off-diagonal component, e.g., in Nambu space 
     end
     return vals, weights
 end
@@ -179,7 +179,7 @@ end
 # BROADENING   #
 ################
 
-function gaussiankernel(ω, E, weight; η=0.05)
+function gaussiankernel(ω, E, weight; η=0.12)
     σ = η*abs(E)
     A = (1/sqrt(2pi))*(1/σ)
     value = A*weight*exp(-(ω - E)^2/(2*σ^2))

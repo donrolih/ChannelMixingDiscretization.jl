@@ -9,30 +9,6 @@ function twistingparameters(Nz::Integer)
     return collect(range(0.5/Nz, 1 - 0.5/Nz, Nz))
 end
 
-"""
-    Generates ω support of ρ for a given mesh type and model. 
-"""
-function generateω(mesh::LogMesh, model::PhysicalModel)
-    # mesh parameters
-    ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
-    Δ = model.Δ
-
-    negfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
-    posfreqs = exp.(range(log(ω0), log(D - Δ), Int(Nω/2) - 1)) .+ Δ
-
-    # This is the 1st version
-    # return vcat(-reverse(negfreqs), [-Δ - offset, Δ + offset], posfreqs)
-    return vcat(-reverse(negfreqs), posfreqs)
-end
-
-function generateω(mesh::LinMesh, model::PhysicalModel)
-    ω0, Nω, D = mesh.ω0, mesh.Nω, mesh.D
-    Δ = model.Δ
-
-    freqs = range(ω0, D - Δ, Int(Nω/2)) .+ Δ
-    return vcat(-reverse(freqs), freqs)
-end
-
 ########################
 # DATA ANALYSIS
 ########################
@@ -82,26 +58,26 @@ end
 # WRAPPER FUNCTION
 ########################
 
-function discretize(ρ::Function, model::PhysicalModel, params::DiscretizationParams; save=false)
+# function discretize(ρ::Function, model::PhysicalModel, params::DiscretizationParams; save=false)
     
-    ω0 = 1e-15
-    Nω = 5000
-    D = 1.
+#     ω0 = 1e-15
+#     Nω = 5000
+#     D = 1.
     
-    mesh = LogMesh(ω0, Nω, D)
+#     mesh = LogMesh(ω0, Nω, D)
 
-    # mapping to star model
-    starH = discmodel(ρ, mesh, model, params)
-    # mapping to chain
-    J = params.J
-    chains = maptochains(starH; m=J)
+#     # mapping to star model
+#     starH = discmodel(ρ, mesh, model, params)
+#     # mapping to chain
+#     J = params.J
+#     chains = maptochains(starH; m=J)
 
-    if save == true
-        savechains(chains)
-    end
+#     if save == true
+#         savechains(chains)
+#     end
 
-    return chains
-end
+#     return chains
+# end
 
 ########################
 # SAVING FILES
@@ -234,6 +210,55 @@ function nrgfilesSPSU2(chains::Vector{WilsonChain})
             Δ[abs.(Δ) .< eps] .= 0.
             writedlm(io, Δ, ',')
         end
+
+        open("$(i)/V11-re.dat", "w") do io
+            θ = Float64(real(T[1, 1, 1]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V21-re.dat", "w") do io
+            θ = Float64(real(T[1, 2, 1]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V12-re.dat", "w") do io
+            θ = Float64(real(T[1, 1, 2]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V22-re.dat", "w") do io
+            θ = Float64(real(T[1, 2, 2]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V11-im.dat", "w") do io
+            θ = Float64(imag(T[1, 1, 1]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V21-im.dat", "w") do io
+            θ = Float64(imag(T[1, 2, 1]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V12-im.dat", "w") do io
+            θ = Float64(imag(T[1, 1, 2]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
+        open("$(i)/V22-im.dat", "w") do io
+            θ = Float64(imag(T[1, 2, 2]))
+            θ = abs(θ) < eps ? 0. : θ 
+            writedlm(io, θ, ",")
+        end
+
     end
 end
 

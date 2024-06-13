@@ -20,7 +20,7 @@ struct AdaptiveGrid
     function AdaptiveGrid(ωs, weights)
         R = cumintegrate(ωs, weights)
         Rtot = R[end]
-        interp_iR = LinearInterpolation(ωs, R)
+        interp_iR = DataInterpolations.LinearInterpolation(ωs, R)
         return new(interp_iR, Rtot)
     end
 end
@@ -54,20 +54,23 @@ struct Discretizer
     interp_Rint     # interpolation of x -> ∫R(ν(x'))dx'; integral 1 to x
     bsign           # sign of ωs (positive or negative branch)
     function Discretizer(ωbranch, ρbranch, weightbranch, 
-                         bsign, gridtype, xmax, Nx)
-        grid = gridtype == :fixed ? FixedGrid() : AdaptiveGrid(bsign .* ωbranch, weightbranch)
+                         bsign, gridtype, gridparams, xmax, Nx)
+        Λ = gridparams["Lambda"]
+        gap = gridparams["gap"]
+        D = gridparams["halfbandwidth"]
+        grid = gridtype == :fixed ? FixedGrid(Λ, D, gap) : AdaptiveGrid(bsign .* ωbranch, weightbranch)
         ν = makeguiding(grid)
         R = cumintegrate(bsign .* ωbranch, ρbranch)
-        interp_R = LinearInterpolation(R, bsign .* ωbranch)
-        interp_iR = LinearInterpolation(bsign .* ωbranch, R)
+        interp_R = DataInterpolations.LinearInterpolation(R, bsign .* ωbranch)
+        interp_iR = DataInterpolations.LinearInterpolation(bsign .* ωbranch, R)
         xs = range(one(BigFloat), xmax, Nx)
         Rint = cumintegrate(xs, interp_R(ν.(xs)))
-        interp_Rint = LinearInterpolation(Rint, xs)
+        interp_Rint = DataInterpolations.LinearInterpolation(Rint, xs)
         return new(ν, interp_R, interp_iR, interp_Rint, bsign)
     end
 end
 
-Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype) = Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, big"200.", 10000)
+Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams) = Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams, big"200.", 100000)
 
 function w(disc::Discretizer, x::BigFloat)
     ν = disc.ν
@@ -100,25 +103,25 @@ function ε(disc::Discretizer, xs::Vector{BigFloat})
     return εs
 end
 
-function maskrho(ρeval::Vector{BigFloat}, bsign, mask)
+function maskrho(ρeval::Vector{T}, bsign, mask) where T <: AbstractFloat
     ρbranch = bsign == 1 ? ρeval[mask] : reverse(ρeval[mask])
     return [ρbranch]
 end
 
-function maskrho(ρeval::Matrix{BigFloat}, bsign, mask)
+function maskrho(ρeval::Matrix{T}, bsign, mask) where T <: AbstractFloat
     # number of bands is the number of ρeval columns
     N = size(ρeval, 2)
-    ρbranches = Vector{Vector{BigFloat}}(under, N)
+    ρbranches = Vector{Vector{T}}(undef, N)
     for (i, rhovec) in enumerate(eachcol(ρeval))
         ρbranches[i] = bsign == 1 ? rhovec[mask] : reverse(rhovec[mask])
     end
     return ρbranches
 end
 
-function calculatediscretizers(ωs::Vector{BigFloat}, ρeval::VecOrMat{BigFloat}, weights::Vector{BigFloat}, bsign::Integer, gridtype::Union{FixedGrid, AdaptiveGrid})
+function calculatediscretizers(ωs::Vector{T}, ρeval::VecOrMat{T}, weights::Vector{T}, bsign::Integer, gridtype::Symbol, gridparams) where T <: AbstractFloat
     @assert (bsign == 1) | (bsign == -1) "the value of bsign is not 1 or -1"
-    
-    mask = bsign == 1 ? ωs .> zero(BigFloat) : ωs .< zero(BigFloat)
+    @assert (gridtype == :fixed) | (gridtype == :adaptive) "gridtype not recognized"
+    mask = bsign == 1 ? ωs .> zero(T) : ωs .< zero(T)
 
     ωbranch = bsign == 1 ? ωs[mask] : reverse(ωs[mask])
     weightbranch = bsign == 1 ? weights[mask] : reverse(weights[mask])
@@ -132,7 +135,7 @@ function calculatediscretizers(ωs::Vector{BigFloat}, ρeval::VecOrMat{BigFloat}
     ρbranches = maskrho(ρeval, bsign, mask) 
     discretizers = Vector{Discretizer}(undef, length(ρbranches))
     for (i, ρbranch) in enumerate(ρbranches)
-        discretizers[i] = Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype)
+        discretizers[i] = Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams)
     end
     return discretizers
 end
@@ -147,7 +150,7 @@ function evaluatecoefficients(discpos::Discretizer, discneg::Discretizer, J, zs)
     # We store the matrices in a dictionary
     Es = Dict()
     Ts = Dict()
-    
+    println(typeof(discpos))
     # On-site energy matrices and hopping matrices (here, they are numbers)
     Es[-1], Ts[-1] = evaluatebranch(discneg, J, zs)
     Es[1], Ts[1] = evaluatebranch(discpos, J, zs)
@@ -160,7 +163,7 @@ function evaluatecoefficients(discpos::Vector{Discretizer}, discneg::Vector{Disc
     # We store the matrices in a dictionary
     Es = Dict()
     Ts = Dict()
-
+    
     Es[-1], Ts[-1] = evaluatebranch(discneg, J, zs, ρ)
     Es[1], Ts[1] = evaluatebranch(discpos, J, zs, ρ)
 
@@ -178,8 +181,8 @@ function evaluatebranch(disc::Discretizer, J, zs)
     for j in 1:J
         for (k, z) in enumerate(zs)
             x = big(j + z)  # evaluate the representative en. at this point
-            ϵ = ε(disc[1], x)  # representative energy
-            t = sqrt(w(disc[1], x))
+            ϵ = ε(disc, x)  # representative energy
+            t = sqrt(w(disc, x))
             E[j, k] = ϵ
             T[j, k] = t
         end
@@ -192,6 +195,7 @@ function evaluatebranch(disc::Vector{Discretizer}, J, zs, ρ)
     # multichannel case
     Nbands = length(disc)
     # now we store matrices for each x = j + z
+    Nz = length(zs)
     E = zeros(Complex{BigFloat}, J, Nz, Nbands, Nbands)
     T = zeros(Complex{BigFloat}, J, Nz, Nbands, Nbands)
     for j in 1:J
@@ -225,6 +229,7 @@ function evaluatebranch(disc::Vector{Discretizer}, J, zs, ρ)
                     # we have to choose the same eigenvector as before
                     Ui = Ux[:, end]
                 end
+                Ux = hcat(Ux, Ui)
             end
             Ux = Ux[:, 2:end]
             Td = zeros(Complex{BigFloat}, Nbands)
@@ -236,4 +241,10 @@ function evaluatebranch(disc::Vector{Discretizer}, J, zs, ρ)
         end
     end
     return E, T
+end
+
+struct StarHamiltonian 
+    T::Dict
+    E::Dict
+    zs::Vector
 end

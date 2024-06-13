@@ -7,15 +7,15 @@ abstract type PhysicalModel end
 struct sWaveSC <: PhysicalModel
     # physical params
     # BCS gap
-    Δ::Float64
+    Δ
     # skewness of the density of states
-    κ::Float64
+    κ
     # hybridization strength
-    Γ::Float64
+    Γ
 end
 
-sWaveSC() = sWaveSC(0.1, 0., 0.5/pi)
-sWaveSC(Δ) = sWaveSC(Δ, 0., 0.5/pi)
+sWaveSC() = sWaveSC(0.1, 0., 0.5)
+sWaveSC(Δ) = sWaveSC(Δ, 0., 0.5)
 
 struct Flat{T<:Real} <: PhysicalModel
     Δ::T
@@ -23,7 +23,6 @@ struct Flat{T<:Real} <: PhysicalModel
 end
 
 Flat() = Flat(0., 0.5/pi)
-
 
 # Hybridization function of the double SC lead AIM 
 # in the scalar representation
@@ -43,30 +42,44 @@ DoubleLeadSC() = DoubleLeadSC(0.01, 0.5, 0.)
 DoubleLeadSC(Δ, ϕ) = DoubleLeadSC(Δ, 0.5, ϕ)
 
 ################################################
-# PREDEFINED HYBRIDIZATIONS
+# HYBRIDIZATIONS FOR PREDEFINED MODELS
 ################################################
 
-function hybri(model::sWaveSC, mesh::Mesh; η=1e-10)
-    function hybri(ω)
-        σ0 = [1. 0.; 0. 1.]
-        σ1 = [0. 1.; 1. 0.]
-        σ3 = [1. 0.; 0. -1.]
-
-        Δ = model.Δ
-        Γ = model.Γ
-        κ = model.κ
-        
-        D = mesh.D
-        z = ω + η*im
-        ξ = sqrt(Δ^2 - z^2)
-
-        I0 = -2atan(D/ξ)/ξ
-        I2 = -2D + 2ξ*atan(D/ξ)
-        Σ = (Γ/pi)*(z*I0*σ0 - I0*Δ*σ1 + κ*I2*σ3)
-        return (im/(2pi))*(Σ - Σ')
+function hybridization(ω::Float64, model::sWaveSC; minvalue=0.)
+    Δ, κ, Γ = model.Δ, model.κ, model.Γ
+    if abs(ω) < Δ
+        return [minvalue minvalue; minvalue minvalue]
+    else
+        ξ = sqrt(ω^2 - Δ^2)
+        τ₀ = [1. 0.; 0. 1.]
+        τ₁ = [0. 1.; 1. 0.]
+        τ₃ = [1. 0.; 0. -1.]
+        return (Γ/pi) * (1/ξ) * (abs(ω)*τ₀ + κ*ω*ξ*τ₃ - Δ*sign(ω)*τ₁)
     end
 end
 
-function hybri(model::Flat, mesh::Mesh)
-    hybri(ω) = model.Γ
+function hybridization(ω::BigFloat, model::sWaveSC; minvalue=big"0.")
+    Δ, κ, Γ = model.Δ, model.κ, model.Γ
+    if abs(ω) < Δ
+        return [minvalue minvalue; minvalue minvalue]
+    else
+        ξ = sqrt(ω^2 - Δ^2)
+        τ₀ = [big"1." big"0."; big"0." big"1."]
+        τ₁ = [big"0." big"1."; big"1." big"0."]
+        τ₃ = [big"1." big"0."; big"0." big"-1."]
+        return (Γ/pi) * (1/ξ) * (abs(ω)*τ₀ + κ*ω*ξ*τ₃ - Δ*sign(ω)*τ₁)
+    end
+end
+
+struct Bethe
+    t
+end
+
+function hybridization(ω, model::Bethe; minvalue=big"0.")
+    t = model.t
+    if abs(ω) < 2t
+        return (1/(2t^2))*sqrt(4t^2 - ω^2)
+    else
+        return minvalue
+    end
 end
