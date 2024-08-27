@@ -225,7 +225,7 @@ function tridiagonalizeSPSU2(A, q, m)
         # S = diagm(sign.(real.(diag(F.R))))
         # S = I
         # we have to choose S s.t. the symmetry properties are satisfied
-        S = diagm([sign(real(F.R[1, 1])) < 0 ? -1. : 1., sign(real(F.R[2, 2])) < 0 ? 1. : -1.])
+        S = diagm([sign(real(F.R[1, 1])) < 0 ? -one(BigFloat) : one(BigFloat), sign(real(F.R[2, 2])) < 0 ? one(BigFloat) : -one(BigFloat)])
         # Ss[j, :, :] = S
         R = S*F.R
         newQj = Matrix(F.Q)*S
@@ -245,7 +245,8 @@ function tridiagonalizeSPSU2(A, q, m)
         Q = hcat(Q, newQj)
         
         if (j != m) && norm(R, 1) < 1e-20
-            println("WARNING! Bad Krylov space!")
+            @show j
+            @warn "WARNING! Bad Krylov space!"
         end
         
         # store the results
