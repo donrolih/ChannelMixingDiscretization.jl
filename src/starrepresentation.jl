@@ -16,7 +16,7 @@
 
 struct AdaptiveGrid
     interp_iR::DataInterpolations.AbstractInterpolation
-    Rtot::BigFloat
+    Rtot::Float64
     function AdaptiveGrid(ωs, weights)
         R = cumintegrate(ωs, weights)
         Rtot = R[end]
@@ -26,21 +26,21 @@ struct AdaptiveGrid
 end
 
 struct FixedGrid
-    Λ::BigFloat  # discretization parameter
-    D::BigFloat  # half-bandwidth, the spectal fn. is contained in [-D, D]
-    Δ::BigFloat  # gap (this changes the accumulation point of the guiding fn)
+    Λ::AbstractFloat  # discretization parameter
+    D::AbstractFloat  # half-bandwidth, the spectal fn. is contained in [-D, D]
+    Δ::AbstractFloat  # gap (this changes the accumulation point of the guiding fn)
 end
 
-FixedGrid() = FixedGrid(big"2.", big"1.", big"0.0")
+FixedGrid() = FixedGrid(2., 1., 0.)
 
 function makeguiding(grid::AdaptiveGrid)
     iR = grid.interp_iR
     Rtot = grid.Rtot
-    return x -> x ≤ big"2." ? iR(Rtot) : iR(Rtot*(big"2." ^ (big"2." - x)))
+    return x -> x ≤ 2. ? iR(Rtot) : iR(Rtot*(2. ^ (2. - x)))
 end
 
 function makeguiding(grid::FixedGrid)
-    return x -> x ≤ big"2." ? grid.D : (grid.D - grid.Δ)*grid.Λ^(big"2." - x) + grid.Δ
+    return x -> x ≤ 2. ? grid.D : (grid.D - grid.Δ)*grid.Λ^(2. - x) + grid.Δ
 end
 
 ################################################################################
@@ -63,40 +63,40 @@ struct Discretizer
         R = cumintegrate(bsign .* ωbranch, ρbranch)
         interp_R = DataInterpolations.LinearInterpolation(R, bsign .* ωbranch)
         interp_iR = DataInterpolations.LinearInterpolation(bsign .* ωbranch, R)
-        xs = range(one(BigFloat), xmax, Nx)
+        xs = range(1., xmax, Nx)
         Rint = cumintegrate(xs, interp_R(ν.(xs)))
         interp_Rint = DataInterpolations.LinearInterpolation(Rint, xs)
         return new(ν, interp_R, interp_iR, interp_Rint, bsign)
     end
 end
 
-Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams) = Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams, big"200.", 100000)
+Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams) = Discretizer(ωbranch, ρbranch, weightbranch, bsign, gridtype, gridparams, 200., 100000)
 
-function w(disc::Discretizer, x::BigFloat)
+function w(disc::Discretizer, x::T) where T <: AbstractFloat
     ν = disc.ν
     interp_R = disc.interp_R
     upperbound = ν(x)
-    lowerbound = ν(x + one(BigFloat))
+    lowerbound = ν(x + one(T))
     return interp_R(upperbound) - interp_R(lowerbound)
 end
 
-function w(disc::Discretizer, xs::Vector{BigFloat})
-    ws = Vector{BigFloat}(undef, size(xs))
+function w(disc::Discretizer, xs::Vector{T}) where T <: AbstractFloat
+    ws = Vector{T}(undef, size(xs))
     for (i, x) in enumerate(xs)
         ws[i] = w(disc, x) 
     end
     return ws
 end
 
-function ε(disc::Discretizer, x::BigFloat)
+function ε(disc::Discretizer, x::T) where T <: AbstractFloat
     interp_iR = disc.interp_iR
     interp_Rint = disc.interp_Rint
     bsign = disc.bsign
-    return bsign .* interp_iR(interp_Rint(x + one(BigFloat)) - interp_Rint(x))
+    return bsign .* interp_iR(interp_Rint(x + one(T)) - interp_Rint(x))
 end
 
-function ε(disc::Discretizer, xs::Vector{BigFloat})
-    εs = Vector{BigFloat}(undef, size(xs))
+function ε(disc::Discretizer, xs::Vector{T}) where T <: AbstractFloat
+    εs = Vector{T}(undef, size(xs))
     for (i, x) in enumerate(xs)
         εs[i] = ε(disc, x)
     end
@@ -148,9 +148,9 @@ end
 # one-channel version
 function evaluatecoefficients(discpos::Discretizer, discneg::Discretizer, J, zs)
     # We store the matrices in a dictionary
-    Es = Dict()
-    Ts = Dict()
-    println(typeof(discpos))
+    Es = Dict{Integer, Array{Float64, 2}}()
+    Ts = Dict{Integer, Array{Float64, 2}}()
+
     # On-site energy matrices and hopping matrices (here, they are numbers)
     Es[-1], Ts[-1] = evaluatebranch(discneg, J, zs)
     Es[1], Ts[1] = evaluatebranch(discpos, J, zs)
@@ -161,8 +161,8 @@ end
 # multichannel version (requires the hybridization function)
 function evaluatecoefficients(discpos::Vector{Discretizer}, discneg::Vector{Discretizer}, J, zs, ρ)
     # We store the matrices in a dictionary
-    Es = Dict()
-    Ts = Dict()
+    Es = Dict{Integer, Array{Float64, 4}}()
+    Ts = Dict{Integer, Array{ComplexF64, 4}}()
     
     Es[-1], Ts[-1] = evaluatebranch(discneg, J, zs, ρ)
     Es[1], Ts[1] = evaluatebranch(discpos, J, zs, ρ)
@@ -176,11 +176,11 @@ function evaluatebranch(disc::Discretizer, J, zs)
     # number of twisting parameters
     Nz = length(zs)
     # we are storing numbers for each x = j + z
-    E = zeros(Complex{BigFloat}, J, Nz)
-    T = zeros(Complex{BigFloat}, J, Nz)
+    E = zeros(Float64, J, Nz)
+    T = zeros(Float64, J, Nz)
     for j in 1:J
         for (k, z) in enumerate(zs)
-            x = big(j + z)  # evaluate the representative en. at this point
+            x = j + z  # evaluate the representative en. at this point
             ϵ = ε(disc, x)  # representative energy
             t = sqrt(w(disc, x))
             E[j, k] = ϵ
@@ -192,20 +192,23 @@ end
 
 # multi-channel version (requires the hybridization function)
 function evaluatebranch(disc::Vector{Discretizer}, J, zs, ρ)
+    S = Float64
     # multichannel case
     Nbands = length(disc)
     # now we store matrices for each x = j + z
     Nz = length(zs)
-    E = zeros(Complex{BigFloat}, J, Nz, Nbands, Nbands)
-    T = zeros(Complex{BigFloat}, J, Nz, Nbands, Nbands)
+    E = zeros(S, J, Nz, Nbands, Nbands)
+    T = zeros(Complex{S}, J, Nz, Nbands, Nbands)
     for j in 1:J
         for (k, z) in enumerate(zs)
-            x = big(j + z)
+            x = j + z
+            # @info typeof(x)
             # we evaluate now for each band
             ϵ = [ε(disc[i], x) for i in 1:Nbands]
             # On-site energy matrices are diagonal in the star rep.
             # Construct diagonal matrix
             ϵ = diagm(ϵ)
+            # @info typeof(ϵ)
             E[j, k, :, :] = ϵ
             # Now comes the evaluation of hopping matrices
             # Here more care is required
@@ -216,25 +219,36 @@ function evaluatebranch(disc::Vector{Discretizer}, J, zs, ρ)
             # Maybe we can exploit the fact that all eigenvalues are nonnegative?
             ϵiold = Inf
             # this will store the eigenvectors
-            Ux = zeros(Complex{BigFloat}, Nbands)
+            Ux = zeros(Complex{S}, Nbands)
             for i in 1:Nbands
                 ϵi = ϵ[i, i]
-                if abs(ϵiold - ϵi) > 1e-100
-                    # eigenvalues are different (we use big floats)
-                    M = Hermitian(ρ(ϵi))
+                # @show j
+                # @show ϵi
+                if true
+                    # eigenvalues are different
+                    M = ρ(ϵi)
+                    @assert ishermitian(M) "hybridization matrix is not hermitian!"
+                    # M = Hermitian(ρ(ϵi))
+                    # @info typeof(M)
+                    # @show M
                     Ui = eigvecs(M)[:, i]
                     ϵiold = ϵi
                 else
-                    @info "Found a degeneracy for z-number z = $(z) at index J = $(J)"
+                    @info "Found a degeneracy for z-number z = $(z) at index J = $(j)"
+                    @info "Frequency value: ω = $(ϵi)"
                     # we have to choose the same eigenvector as before
                     Ui = Ux[:, end]
                 end
                 Ux = hcat(Ux, Ui)
             end
+            @show ϵ
             Ux = Ux[:, 2:end]
-            Td = zeros(Complex{BigFloat}, Nbands)
+            @show Ux
+            Td = zeros(Complex{S}, Nbands)
             for i in 1:Nbands
-                Tdi = sqrt(w(disc[i], x)) .* Ux[:, i]
+                ti = sqrt(w(disc[i], x))
+                @show (i, ti)
+                Tdi = ti .* Ux[:, i]
                 Td = hcat(Td, Tdi)
             end
             T[j, k, :, :] = Td[:, 2:end]'

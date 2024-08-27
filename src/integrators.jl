@@ -23,19 +23,19 @@ function cumintegrate(xs, ys, lower, upper)
     p = sortperm(xs)
     xs, ys = xs[p], ys[p]
     len = length(xs)
-    sum = big"0."
+    sum = 0.
     cumint = zeros(len)
     for i in 2:len
         x0, y0 = xs[i-1], ys[i-1]
         x1, y1 = xs[i], ys[i]
-        yavg = (y1 + y0) / big"2."
-        dx = big"0."
+        yavg = (y1 + y0) / 2.
+        dx = 0.
         if x0 < upper & x1 ≤ upper
             dx = x1 - x0
         elseif x0 < upper & x1 > upper
             dx = upper - x0
         else
-            dx = big"0."
+            dx = 0.
         end
         sum += dx * yavg
         cumint[i] = sum

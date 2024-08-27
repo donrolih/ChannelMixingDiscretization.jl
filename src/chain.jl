@@ -1,6 +1,6 @@
 struct WilsonChain
-    E::Array{Complex{BigFloat}, 3}
-    T::Array{Complex{BigFloat}, 3}
+    E::Array{Complex{Float64}, 3}
+    T::Array{Complex{Float64}, 3}
     z::Tuple{Int64, Int64}
 end
 
@@ -153,6 +153,9 @@ function maptochainsSPSU2(starH::StarHamiltonian; m=nothing)
             T[1, :, :] = F.R
             # sub-diagonal
             T = vcat(T, diags[-1])
+            # convert back to normal floats
+            E = convert.(Complex{Float64}, E)
+            T = convert.(Complex{Float64}, T)
             chains[i] = WilsonChain(E, T, (i, Nz))
             stop = time()
             elapsed = stop - start
@@ -165,7 +168,7 @@ function maptochainsSPSU2(starH::StarHamiltonian; m=nothing)
         # store the data in a vector of dicts
         chains = Vector{WilsonChain}(undef, Nz)
         for (i, z) in enumerate(zs)
-            println("Mapping to a Wilson chain for twisting parameter z = $(z) ...")
+            @info "Mapping to a Wilson chain for twisting parameter z = $(z) ..."
             start = time()
             ti = Tlist[:, i, :, :]
             ti = permutedims(reshape(permutedims(ti, [3, 2, 1]), (Nbands, :)), Nbands:-1:1)
@@ -189,10 +192,14 @@ function maptochainsSPSU2(starH::StarHamiltonian; m=nothing)
             T[1, :, :] = R
             # sub-diagonal
             T = vcat(T, diags[-1])
+            # convert back to normal floats
+            E = convert.(Complex{Float64}, E)
+            T = convert.(Complex{Float64}, T)
+            # @info typeof(E)
             chains[i] = WilsonChain(E, T, (i, Nz))
             stop = time()
             elapsed = stop - start
-            println("Mapping duration for z = $(z): $(round(elapsed;  digits=2)) s")
+            @info "Mapping duration for z = $(z): $(round(elapsed;  digits=2)) s"
         end
     end
     return chains

@@ -1,25 +1,25 @@
 # Wrapper functions for the user
 
-function discretize(ωs::Vector{BigFloat},
-                    ρs::Vector{BigFloat},
-                    mesh_min, mesh_max, mesh_ratio,
+function discretize(ωs::Vector{T},
+                    ρs::Vector{T},
+                    mesh_min, mesh_max, mesh_ratio, mesh_accumulation,
                     J, zs, gridtype,
                     Λ, gap, D;
-                    savechain=true,
-                    nrg_generatefolders=true,
-                    )
+                    savechain=false,
+                    nrg_generatefolders=false,
+                    ) where T <: AbstractFloat
     # this is single-channel case
     # the input is a tabulated function (ωs, ρs)
     
     interpolated_ρ = DataInterpolations.LinearInterpolation(ρs, ωs)
     
-    freqs = logmesh(mesh_min, mesh_max, mesh_ratio, big"1e-100")
+    freqs = logmesh(mesh_min, mesh_max, mesh_ratio, mesh_accumulation)
     
     # single-channel case, DOS values and weights  are the same as the input ρs
     values = interpolated_ρ.(freqs)
     weights = values
 
-    gridparams = Dict{String, AbstractFloat}()
+    gridparams = Dict{String, T}()
     gridparams["Lambda"] = Λ
     gridparams["gap"] = gap
     gridparams["halfbandwidth"] = D
@@ -90,7 +90,7 @@ function discretize(ωs::Vector{T},
 end
 
 # Calculate the weight function and DOS for each channel
-function weightsDOS(ρs::Vector{Matrix{T}}) where T <: AbstractFloat
+function weightsDOS(ρs::Vector{Matrix{T}}; minvalue=zero(T)) where T <: AbstractFloat
     # get weights as a norm
     # Q: is there a better "measure" for the weights
     # Norm is λ₁² + λ₂²; is there a better way to define the weight?
@@ -100,5 +100,37 @@ function weightsDOS(ρs::Vector{Matrix{T}}) where T <: AbstractFloat
     ρeval = [eigvals(M) for M in ρs]
     ρeval = reduce(vcat, transpose.(ρeval))
 
+    m = size(ρeval, 2)
+    weights = T[]
+
+    for row in eachrow(ρeval)
+        # println(row)
+        @assert (row .>= zero(T)) == ones(Bool, m) "density of states is negative!"
+        mask = row .< minvalue
+        # we set new values where they are zero
+        row[mask] .= minvalue
+
+        # calculate the weight
+        push!(weights, norm(row))
+    end
+
+    return weights, ρeval
+end
+
+function weightsvalues(ρs::Array{Complex{Float64}, 3}; minvalue=1e-5)
+    N, n, _ = size(ρs)
+    ρeval = zeros(Float64, N, n)
+    weights = zeros(Float64, N)
+    for (i, M) in enumerate(eachslice(ρs, dims=1))
+        # println(M)
+        @assert ishermitian(M) "hybridization is not Hermitian!"
+        values = eigvals(M)
+        # @assert (values .>= zero(T)) == ones(Bool, n) "hybridization is not positive semi-definite"
+        mask = values .< minvalue
+        values[mask] .= minvalue
+        
+        ρeval[i, :] = values
+        weights[i] = norm(values)
+    end
     return weights, ρeval
 end
