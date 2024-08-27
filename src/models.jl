@@ -31,11 +31,11 @@ Flat() = Flat(0., 0.5/pi)
 # which is the difference of SC phases in both leads
 struct DoubleLeadSC <: PhysicalModel
     # BCS gap
-    Δ::Float64
-    # hybridization strength
-    Γ::Float64
+    Δ
     # phase difference
-    ϕ::Float64
+    ϕ
+    # hybridization strength
+    Γ
 end
 
 DoubleLeadSC() = DoubleLeadSC(0.01, 0.5, 0.)
@@ -71,6 +71,18 @@ function hybridization(ω::BigFloat, model::sWaveSC; minvalue=big"0.")
     end
 end
 
+function hybridization(ω, model::DoubleLeadSC; minvalue=0.)
+    Γ = model.Γ
+    Δ = model.Δ
+    ϕ = model.ϕ
+    if abs(ω) < Δ
+        return minvalue
+    else
+        ξ = sqrt(ω^2 - Δ^2)
+        return Γ*sign(ω)*(ω - Δ*cos(ϕ/2))/ξ
+    end
+end
+
 struct Bethe
     t
 end
@@ -78,7 +90,7 @@ end
 function hybridization(ω, model::Bethe; minvalue=big"0.")
     t = model.t
     if abs(ω) < 2t
-        return (1/(2t^2))*sqrt(4t^2 - ω^2)
+        return (1/(π*2t^2))*sqrt(4t^2 - ω^2)
     else
         return minvalue
     end

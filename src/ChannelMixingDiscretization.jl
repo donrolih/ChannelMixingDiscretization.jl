@@ -20,11 +20,12 @@ export logmesh, LinMesh, DiscretizationParams
 # from models.jl
 export sWaveSC, Flat, DoubleLeadSC, Bethe, hybridization
 # from chain.jl
-export WilsonChain, maptochains
+export WilsonChain, maptochains, maptochainsONEBAND, maptochainsSPSU2
 # from starrepresentation.jl
 export StarHamiltonian
+export calculatediscretizers, evaluatecoefficients
 # from wrapper.jl
-export discretize
+export discretize, weightsvalues
 # from utils.jl
 export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains, loadchains
 # from reconstruct.jl

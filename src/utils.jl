@@ -186,7 +186,7 @@ function nrgfilesSPSU2(chains::Vector{WilsonChain})
         E = chains[i].E
         
         # round to zero
-        eps = 1e-15
+        eps = 1e-100
         open("$(i)/xi.dat", "w") do io
             ξ = Float64.(real.(T[2:end, 1, 1]))
             ξ[abs.(ξ) .< eps] .= 0.
