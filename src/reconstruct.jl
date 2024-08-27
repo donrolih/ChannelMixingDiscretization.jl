@@ -182,15 +182,25 @@ end
 function gaussiankernel(ω, E, weight; η=0.12)
     σ = η*abs(E)
     A = (1/sqrt(2pi))*(1/σ)
-    value = A*weight*exp(-(ω - E)^2/(2*σ^2))
+    @assert !isnan(A) "NaN prefactor value encountered in broadening!"
+    exponent = -(ω - E)^2/(2*σ^2)
+    @assert !isnan(exponent) "NaN exponent value encountered in broadening!"
+    value = A*weight*exp(exponent)
+    if isnan(value)
+        @info "input: ω = $(ω), E = $(E), weight = $(weight)"
+        @info "prefactor A = $(A)"
+        @info "exponent exponent = $(exponent)"
+        @info "final value = $(value)"
+    end
+    @assert !isnan(value) "NaN final value encountered in broadening!"
     return value
 end
 
-function broaden(ωs, energies, weights)
+function broaden(ωs, energies, weights; η=0.11)
     spectralfunction = zeros(length(ωs))
     for (i, E) in enumerate(energies)
         weight = weights[i]
-        spectralfunction += gaussiankernel.(ωs, E, weight)
+        spectralfunction += gaussiankernel.(ωs, E, weight; η=η)
     end
     return spectralfunction
 end
@@ -211,4 +221,41 @@ function broadenaverage(lb, ub, Nω, Nz; save=true)
         writedlm(f, [ωs result])
     end
     return ωs, result
+end
+
+"""
+    Given a vector of chain Hamiltonians construct their matrices, diagonalise it, compute spectral weighths from the eigenvectors and average over all twist numbers.
+"""
+function broadenSC(chains::Vector{WilsonChain}, lb, ub, Nω; η=0.12)
+    Nz = length(chains)
+    freqs = Array{Vector{ComplexF64}}(undef, Nz)
+    weights11 = Array{Vector{ComplexF64}}(undef, Nz)
+    weights12 = Array{Vector{ComplexF64}}(undef, Nz)
+    
+    for (i, chain) in enumerate(chains)
+        println("Diagonalising for (i, Nz) = ($(i), $(Nz))")
+        H = buildhamiltonian(chain)
+        vals, vecs = eigen(H)
+        w11 = zeros(size(vecs, 2))
+        w12 = zeros(size(vecs, 2))
+        for (j, k) in enumerate(eachcol(vecs))
+            w11[j] = abs(k[1])^2
+            w12[j] = real.(k[1]'*k[2])
+        end
+        freqs[i] = vals
+        weights11[i] = w11
+        weights12[i] = w12
+    end
+
+    ωs = range(lb, ub, Nω)
+    res11 = zeros(Nω)
+    res12 = zeros(Nω)
+    for i in 1:Nz
+        energies = freqs[i]
+        w11 = weights11[i]
+        w12 = weights12[i]
+        res11 += broaden(ωs, energies, w11; η=η)
+        res12 += broaden(ωs, energies, w12; η=η)
+    end
+    return ωs, res11, res12
 end
