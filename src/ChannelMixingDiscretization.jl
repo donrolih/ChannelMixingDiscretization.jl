@@ -29,7 +29,7 @@ export discretize, weightsvalues
 # from utils.jl
 export twistingparameters, paulibasis, generateω, getpaulicoeffs, generateρs, savechains, loadchains
 # from reconstruct.jl
-export reconstructhybri, spectralfunction, broadenaverage
+export reconstructhybri, spectralfunction, broadenaverage, broaden1D, broadenSC
 
 include("meshes.jl")
 include("models.jl")

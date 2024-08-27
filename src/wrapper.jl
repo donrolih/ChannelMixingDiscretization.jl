@@ -4,7 +4,7 @@ function discretize(ωs::Vector{T},
                     ρs::Vector{T},
                     mesh_min, mesh_max, mesh_ratio, mesh_accumulation,
                     J, zs, gridtype,
-                    Λ, gap, D;
+                    Λ, D;
                     savechain=false,
                     nrg_generatefolders=false,
                     ) where T <: AbstractFloat
@@ -21,7 +21,7 @@ function discretize(ωs::Vector{T},
 
     gridparams = Dict{String, T}()
     gridparams["Lambda"] = Λ
-    gridparams["gap"] = gap
+    gridparams["gap"] = mesh_accumulation
     gridparams["halfbandwidth"] = D
 
     # calculate the discretizer objects
@@ -39,9 +39,10 @@ function discretize(ωs::Vector{T},
     
     # save chain coeffients in a separate folder
     if savechain savechains(chains) end
-
+    
     # generate NRG folders
     if nrg_generatefolders nrgfilesONEBAND(chains) end
+    
     return starH, chains
 end
 
@@ -84,7 +85,13 @@ function discretize(ωs::Vector{T},
     star = StarHamiltonian(Ts, Es, zs)
 
     # perform block Lanczos tridiagonalisation for each z number
-    chains = maptochainsSPSU2(starH; m=2J)
+    chains = maptochainsSPSU2(star; m=2J)
+
+    # save chain coeffients in a separate folder
+    if savechain savechains(chains) end
+    
+    # generate NRG folders
+    if nrg_generatefolders nrgfilesSPSU2(chains) end
 
     return star, chains
 end

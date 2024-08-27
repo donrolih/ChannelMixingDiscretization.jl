@@ -233,14 +233,14 @@ function broadenSC(chains::Vector{WilsonChain}, lb, ub, Nω; η=0.12)
     weights12 = Array{Vector{ComplexF64}}(undef, Nz)
     
     for (i, chain) in enumerate(chains)
-        println("Diagonalising for (i, Nz) = ($(i), $(Nz))")
+        @info "Diagonalising for (i, Nz) = ($(i), $(Nz))"
         H = buildhamiltonian(chain)
         vals, vecs = eigen(H)
         w11 = zeros(size(vecs, 2))
         w12 = zeros(size(vecs, 2))
         for (j, k) in enumerate(eachcol(vecs))
             w11[j] = abs(k[1])^2
-            w12[j] = real.(k[1]'*k[2])
+            w12[j] = real.(k[2]*k[1])
         end
         freqs[i] = vals
         weights11[i] = w11
@@ -257,5 +257,32 @@ function broadenSC(chains::Vector{WilsonChain}, lb, ub, Nω; η=0.12)
         res11 += broaden(ωs, energies, w11; η=η)
         res12 += broaden(ωs, energies, w12; η=η)
     end
-    return ωs, res11, res12
+    return ωs, res11 ./ Nz, res12 ./ Nz
+end
+
+function broaden1D(chains::Vector{WilsonChain}, lb, ub, Nω; η=0.12)
+    Nz = length(chains)
+    freqs = Array{Vector{ComplexF64}}(undef, Nz)
+    weights = Array{Vector{ComplexF64}}(undef, Nz)
+
+    for (i, chain) in enumerate(chains)
+        @info "Diagonalising for (i, Nz) = ($i, $(Nz))"
+        H = buildhamiltonian(chain)
+        vals, vecs = eigen(H)
+        w = zeros(size(vecs, 2))
+        for (j, k) in enumerate(eachcol(vecs))
+            w[j] = abs(k[1])^2
+        end
+        freqs[i] = vals
+        weights[i] = w
+    end
+
+    ωs = range(lb, ub, Nω)
+    res = zeros(Nω)
+    for i in 1:Nz
+        energies = freqs[i]
+        w = weights[i]
+        res += broaden(ωs, energies, w; η=η) 
+    end
+    return ωs, res ./ Nz
 end
