@@ -262,7 +262,7 @@ function nrgfilesSPSU2(chains::Vector{WilsonChain})
     end
 end
 
-function nrgfilesONEBAND(chains::Vector{WilsonChain}; bandrescale=1.)
+function nrgfilesONEBAND(chains::Vector{WilsonChain}, Nmax; bandrescale=1.)
     Nz = length(chains)
     for i in 1:Nz
         mkpath("$(i)")
@@ -272,19 +272,19 @@ function nrgfilesONEBAND(chains::Vector{WilsonChain}; bandrescale=1.)
         eps = 1e-15
 
         open("$(i)/xi.dat", "w") do io
-            ξ = Float64.(real.(T[2:end, 1, 1])) .* bandrescale
+            ξ = Float64.(real.(T[2:(Nmax+2), 1, 1])) .* bandrescale
             ξ[abs.(ξ) .< eps] .= 0.
             writedlm(io, ξ, ',')
         end
 
         open("$(i)/zeta.dat", "w") do io
-            ζ = Float64.(real.(E[:, 1, 1])) .* bandrescale
+            ζ = Float64.(real.(E[1:(Nmax+1), 1, 1])) .* bandrescale
             ζ[abs.(ζ) .< eps] .= 0.
             writedlm(io, ζ, ',')
         end
 
         open("$(i)/theta.dat", "w") do io
-            θ = Float64(real(T[1, 1, 1])) .* bandrescale
+            θ = (Float64(real(T[1, 1, 1])) .* bandrescale) ^ 2
             θ = abs(θ) < eps ? 0. : θ
             writedlm(io, θ, ',')
         end

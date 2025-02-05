@@ -18,6 +18,7 @@ QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 [compat]
 BlockDiagonals = "0.1.41"
 Interpolations = "0.14.7"
+DataInterpolations = "5.3.0"
 JLD2 = "0.4.31"
 NumericalIntegration = "0.2.0"
 julia = "1"

@@ -4,7 +4,7 @@ function discretize(ωs::Vector{T},
                     ρs::Vector{T},
                     mesh_min, mesh_max, mesh_ratio, mesh_accumulation,
                     J, zs, gridtype,
-                    Λ, D;
+                    Λ, D, Nmax;
                     savechain=false,
                     nrg_generatefolders=false,
                     ) where T <: AbstractFloat
@@ -41,7 +41,7 @@ function discretize(ωs::Vector{T},
     if savechain savechains(chains) end
     
     # generate NRG folders
-    if nrg_generatefolders nrgfilesONEBAND(chains) end
+    if nrg_generatefolders nrgfilesONEBAND(chains, Nmax) end
     
     return starH, chains
 end
