@@ -40,5 +40,6 @@ include("wrapper.jl")
 include("utils.jl")
 include("reconstruct.jl")
 include("integrators.jl")
+include("bauer.jl")
 
 end
