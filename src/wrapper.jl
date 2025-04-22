@@ -132,7 +132,7 @@ function weightsvalues(ρs::Array{Complex{Float64}, 3}; minvalue=1e-5)
         # println(M)
         @assert ishermitian(M) "hybridization is not Hermitian!"
         values = eigvals(M)
-        # @assert (values .>= zero(T)) == ones(Bool, n) "hybridization is not positive semi-definite"
+        # @assert (values .>= zero(Float64)) == ones(Bool, n) "hybridization is not positive semi-definite"
         mask = values .< minvalue
         values[mask] .= minvalue
         
